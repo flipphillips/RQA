@@ -16,3 +16,11 @@
 -->
 
 ## [Unreleased changes]
+
+***
+
+## [0.1.0] - 2019-06-26
+
+### Added
+
+- initial check-in based on start of package developed with Dave Jacobs c.a. 2016.

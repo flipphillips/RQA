@@ -1,7 +1,9 @@
-# FPTools
+# RQA
 
-![](icon.png)
+![logo](icon.png)
 
 v 0.1.0
 
-A set Mathematica tools for RQA
+***
+
+A set Mathematica tools for RQA --- Recurrence quantification analysis

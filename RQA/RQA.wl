@@ -7,9 +7,9 @@
 (* :Title: RQA *)
 (* :Context: RQA` *)
 (* :Author: Flip Phillips *)
-(* :Summary: This package provides various things to Mathematica. *)
+(* :Summary: This package provides various things and stuff to Mathematica. *)
 (* :Package Version: 1.1 *)
-(* :Mathematica Version: 10.0 *)
+(* :Mathematica Version: 10.0+ *)
 (* :Copyright: Copyright 1988-2016, Flip Phillips, All Rights Reserved.  *)
 (* :History: *)
 (* :Keywords: packages, path, keywords *)
@@ -152,11 +152,11 @@ embedHelper[f_,ts_,dim_,\[Tau]_]:=
 	{#,Table[f[#+d \[Tau]],{d,0,dim-1}]}&/@ts
 
 
-RQAEmbed[ts_,d_,\[Tau]_]:=Module[{vals},
-	Off[InterpolatingFunction::dmval];
+RQAEmbed[ts_,d_,\[Tau]_,OptionsPattern[]]:=Module[{vals,validts},
+	validts=Map[
+		Select[#,(#<=(ts["LastTime"]-\[Tau])&)]&,ts["TimeList"]];
 	vals=MapThread[embedHelper[#1,#2,d,\[Tau]]&,
-		{ts["PathFunction",All],ts["TimeList"]}];
-	On[InterpolatingFunction::dmval];
+		{Take[ts["PathFunction",All],Length[validts]],validts}];
 	TimeSeries[TemporalData[vals],ResamplingMethod->Automatic]]
 
 
@@ -193,18 +193,18 @@ RQARecurrenceMap[ts_,radius_:Automatic,opts:OptionsPattern[]]:=Module[{dm,r},
 
 
 (* ::Text:: *)
-(*For some reason, the Autocorrelation and CorrelationFunction in MMa 10/11 don't use the times of the time series, but instead seem to just use the raw "Values" so we need to figure out the time scale/samples/etc. This is the version that Webber et al. use, let's see how well it works.*)
+(*For some reason, the Autocorrelation and CorrelationFunction in MMa 10/11 don't use the times of the time series, but instead seem to just use the raw "Values" so we need to figure out the time scale/samples/etc. This is the version that Weber et al. use, let's see how well it works.*)
 
 
 (* ::Text:: *)
-(*There is another method proposed that uses the first minimum of the *)
+(*There is another method proposed that uses the first minimum of the 0-crossings*)
 
 
-RQAEstimateLag[ts_,\[Tau]max_:Automatic]:=Module[{f,dt,smax},
+RQAEstimateLag[ts_,\[Tau]max_:Automatic]:=Module[{f,dt,smax,sols,t},
 	dt=Mean[Differences[ts["Times"]]]; (* could just do First, or Median... *)
-	smax=Round[If[\[Tau]max===Automatic,Length[ts["Values"]]/2,\[Tau]max/dt]];
-	f=CorrelationFunction[ts,{1,smax}];
-	dt*t/.FindRoot[f[t],{t,1}]]
+	smax=Round[If[\[Tau]max===Automatic,Length[ts["Values"]]/2.0,\[Tau]max/dt]];
+	f=CorrelationFunction[TimeSeriesResample[ts,{1,Length[ts["Values"]],1}],{1,smax}];
+	dt*t/.Quiet[FindRoot[f[t],{t,2,1,smax}]]]
 
 
 (* ::Text:: *)
@@ -224,11 +224,17 @@ Options[RQANeighbors]={DistanceFunction->Automatic}
 (*	Flatten[FirstPosition[ts["Values"],nf[#,2][[2]]]&/@ts["Values"]]]*)
 
 
-RQANeighbors[ts_,OptionsPattern[]]:=Module[{nf,d},
+(* ::Text:: *)
+(*This version is a mess*)
+
+
+RQANeighbors[ts_,OptionsPattern[]]:=Module[{nf,d,n=5},
 	d=ts["Values"];
 	nf=Nearest[d,DistanceFunction->OptionValue[DistanceFunction]];
-	MapThread[If[Length[#1]==1,#1,DeleteCases[#1,#2]]&,
-		{Flatten[Position[d,#]]&/@Flatten[(nf[#,1]&/@d)],
+	
+	MapThread[
+		If[Length[#1]==1,#1,DeleteCases[#1,#2]]&,
+		{First[Flatten[Map[Position[d,#]&,(nf[#,n]&/@d),{2}],{3,4}]],
 		 Range[Length[d]]}]]
 
 
@@ -249,7 +255,7 @@ RQANeighborDistances[ts_,neighbors_:None,OptionsPattern[]]:=Module[{n,df},
 
 
 (* ::Text:: *)
-(*Find 'false' neighbors as per Subscript[d, E] ala Kennel et al 1992. The 'threshold' of '10' I don't fully understand, but, whatever, it seems to work and drops to 0 after a few dimensions. Interestingly, I don't see the behavior they talk about re: noise (that the Subscript[p, false] increases with d) when I try with white noise... so maybe there is an implementation issue- but- I get the 'right' results when I try with various dimension signals. *)
+(*Find 'false' neighbors as per  Kennel et al 1992. The 'threshold' of '10' I don't fully understand, but, whatever, it seems to work and drops to 0 after a few dimensions. Interestingly, I don't see the behavior they talk about re: noise (that the Subscript[p, false] increases with d) when I try with white noise... so maybe there is an implementation issue- but- I get the 'right' results when I try with various dimension signals. *)
 
 
 neighborDistanceChange[d1_,d2_]:=MapThread[Norm[{##}]&,{d1,d2}]
@@ -277,6 +283,7 @@ RQAEstimateDimensionality[ts_,\[Tau]_:1.0]:=Module[
 			d1=d2;embed1=embed2;
 			embed2=RQAEmbed[ts,dsubE,\[Tau]];
 			d2=RQANeighborDistances[embed2,neighbours];
+			Print[d2];
 			pFalse=falseNeighborP[d1,d2,rthresh];
 			Print[pFalse];
 			Sow[{dsubE,pFalse}];]]]
