@@ -10,7 +10,7 @@
 (* :Summary: This package provides various things and stuff to Mathematica. *)
 (* :Package Version: 1.1 *)
 (* :Mathematica Version: 10.0+ *)
-(* :Copyright: Copyright 1988-2016, Flip Phillips, All Rights Reserved.  *)
+(* :Copyright: Copyright 1988-2019, Flip Phillips, All Rights Reserved.  *)
 (* :History: *)
 (* :Keywords: packages, path, keywords *)
 (* :Limitations:  *)
@@ -122,9 +122,6 @@ Unprotect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,RQANeighbors,RQANearestNeigh
 (*Error messages for the exported objects*)
 
 
-FName::unity="A and B must be 1"
-
-
 (* ::Subsection:: *)
 (*Definition of the exported functions*)
 
@@ -149,15 +146,38 @@ Table[TimeSeriesWindow[ts,{t0,t0+wid}],{t0,ts["FirstTime"],ts["LastTime"]-wid,ov
 
 
 embedHelper[f_,ts_,dim_,\[Tau]_]:=
-	{#,Table[f[#+d \[Tau]],{d,0,dim-1}]}&/@ts
+	{#,Quiet@Table[f[#+(d*\[Tau])],{d,0,dim-1}]}&/@ts
 
 
-RQAEmbed[ts_,d_,\[Tau]_,OptionsPattern[]]:=Module[{vals,validts},
-	validts=Map[
-		Select[#,(#<=(ts["LastTime"]-\[Tau])&)]&,ts["TimeList"]];
+Options[RQAEmbed]={
+	"Truncate"->True,ResamplingMethod->Automatic};
+
+
+RQAEmbed::truncated="Resulting truncated series length would be < 0 for this d and \[Tau].";
+
+
+(* ::Code:: *)
+(*RQAEmbed[ts_,d_,\[Tau]_,OptionsPattern[]]:=Module[{vals,validts},*)
+(*	validts=If[OptionValue["Truncate"],*)
+(*	  Map[*)
+(*		Select[#,(#<=(ts["LastTime"]-\[Tau])&)]&,ts["TimeList"]],*)
+(*	  ts["TimeList"]];*)
+(*	  *)
+(*	vals=MapThread[embedHelper[#1,#2,d,\[Tau]]&,*)
+(*		{Take[ts["PathFunction",All],Length[validts]],validts}];*)
+(*	TimeSeries[TemporalData[vals],ResamplingMethod->OptionValue[ResamplingMethod]]]*)
+
+
+RQAEmbed[ts_,d_,\[Tau]_,OptionsPattern[]]:=Module[{vals,validts,truncTime},
+	validts=If[OptionValue["Truncate"],
+		truncTime=(ts["LastTime"]-(d-1)\[Tau]);
+		If[truncTime<=0,Message[RQAEmbed::truncated];Null,
+			Map[Select[#,(#<=truncTime&)]&,ts["TimeList"]]],
+		ts["TimeList"]];
+	  
 	vals=MapThread[embedHelper[#1,#2,d,\[Tau]]&,
-		{Take[ts["PathFunction",All],Length[validts]],validts}];
-	TimeSeries[TemporalData[vals],ResamplingMethod->Automatic]]
+		{ts["PathFunction",All],validts}];
+	TimeSeries[TemporalData[vals],ResamplingMethod->OptionValue[ResamplingMethod]]]
 
 
 (* ::Text:: *)
@@ -245,48 +265,59 @@ RQANearestNeighbors[ts_,opts:OptionsPattern[]]:=First/@RQANeighbors[ts,opts]
 (*Given a ts, compute the distance from its nearest neighbor. As D increases, for some points, these neighbors will be the same or decrease, but, for others, that distance will increase, they are false neighbors that we will clean out in the next step.*)
 
 
-Options[RQANeighborDistances]={DistanceFunction->SquaredEuclideanDistance};
+Options[RQANeighborDistances]={DistanceFunction->SquaredEuclideanDistance,"Neighbors"->None};
 
 
-RQANeighborDistances[ts_,neighbors_:None,OptionsPattern[]]:=Module[{n,df},
+(* ::Code:: *)
+(*RQANeighborDistances[ts_,neighbors_:None,OptionsPattern[]]:=Module[{n,df},*)
+(*	df=OptionValue[DistanceFunction];*)
+(*	n=If[neighbors===None,RQANearestNeighbors[ts,DistanceFunction->df],neighbors];*)
+(*	MapThread[OptionValue[DistanceFunction],{ts["Values"],ts["Values"][[n]]}]]*)
+
+
+(* ::Text:: *)
+(*The above might not be working anymore since the new embedding results in reduction of the length of the time series. Maybe I shouldn't be doing that?*)
+
+
+RQANeighborDistances[ts_,OptionsPattern[]]:=Module[{n,df},
 	df=OptionValue[DistanceFunction];
-	n=If[neighbors===None,RQANeighbors[ts,DistanceFunction->df],neighbors];
+	n=If[OptionValue["Neighbors"]===None,RQANearestNeighbors[ts,DistanceFunction->df],OptionValue["Neighbors"]];
 	MapThread[OptionValue[DistanceFunction],{ts["Values"],ts["Values"][[n]]}]]
 
 
 (* ::Text:: *)
-(*Find 'false' neighbors as per  Kennel et al 1992. The 'threshold' of '10' I don't fully understand, but, whatever, it seems to work and drops to 0 after a few dimensions. Interestingly, I don't see the behavior they talk about re: noise (that the Subscript[p, false] increases with d) when I try with white noise... so maybe there is an implementation issue- but- I get the 'right' results when I try with various dimension signals. *)
+(*Find 'false' neighbors as per  Kennel et al 1992. The 'threshold' of '10' I don't fully understand.*)
 
 
 neighborDistanceChange[d1_,d2_]:=MapThread[Norm[{##}]&,{d1,d2}]
 
 
-falseNeighborP[d1_,d2_,thresh_:10]:=Module[{d},
+falseNeighborP[d1_,d2_,thresh_]:=Module[{d},
 	d=neighborDistanceChange[d1,d2];
-	N[Count[d,x_/;x>thresh]/Length[d2]]
+	Print[Min[d]];
+	N[Count[d,x_/;x<thresh]/Length[d2]]
 ]
 
 
-RQAEstimateDimensionality[ts_,\[Tau]_:1.0]:=Module[
+RQAEstimateDimensionality[ts_,\[Tau]_]:=Module[
 	{pFalse=1.0,dsubE=1,neighbours,d1,d2,embed1,embed2,
-		pThresh=0.05,rthresh=10*\[Tau],dMax=256},
+		pThresh=0.05,rthresh,dMax=50}, (* was 10\[Tau] *)
 
-	(* prime the pump *)
-	neighbours=RQANearestNeighbors[ts];
 	embed2=ts;
-	d2=RQANeighborDistances[embed2,neighbours];
-
+	d2=RQANeighborDistances[embed2];
+	rthresh=10 Mean[d2];Print[rthresh];
+	
 	(* iterate until we fall below pThresh false neighbors *)
 	Reap[
 		While[pFalse>pThresh&&dsubE<dMax,
 			dsubE=dsubE+1;
 			d1=d2;embed1=embed2;
 			embed2=RQAEmbed[ts,dsubE,\[Tau]];
-			d2=RQANeighborDistances[embed2,neighbours];
-			Print[d2];
-			pFalse=falseNeighborP[d1,d2,rthresh];
-			Print[pFalse];
-			Sow[{dsubE,pFalse}];]]]
+			d2=RQANeighborDistances[embed2];
+			pFalse=falseNeighborP[Take[d1,Length[d2]],d2,rthresh];
+			Sow[{dsubE,pFalse,Length[d1],Mean[d1],Length[d2],Mean[d2]}];]]
+			
+			]
 
 
 (* ::Subsubsection:: *)
