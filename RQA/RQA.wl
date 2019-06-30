@@ -8,7 +8,7 @@
 (* :Context: RQA` *)
 (* :Author: Flip Phillips *)
 (* :Summary: This package provides various things and stuff to Mathematica. *)
-(* :Package Version: 1.1 *)
+(* :Package Version: 1.5 *)
 (* :Mathematica Version: 10.0+ *)
 (* :Copyright: Copyright 1988-2019, Flip Phillips, All Rights Reserved.  *)
 (* :History: *)
@@ -37,6 +37,9 @@ RQA::usage="RQA is a package which provides RQA."
 
 (* ::Text:: *)
 (*Building the map*)
+
+
+RQAEmbeddedLastTime::usage="RQAEmbeddedLastTime[ts,d,t] returns the last valid time for an embedding in dimension d for lag t."
 
 
 RQAEmbed::usage="RQAEmbed[ts,dims,tau] but why."
@@ -153,6 +156,9 @@ embedHelper[f_,ts_,dim_,\[Tau]_]:=
 	{#,Quiet@Table[f[#+(d*\[Tau])],{d,0,dim-1}]}&/@ts
 
 
+RQAEmbeddedLastTime[ts_,d_,\[Tau]_]:=(ts["LastTime"]-(d-1)\[Tau])
+
+
 Options[RQAEmbed]={
 	"Truncate"->True,ResamplingMethod->Automatic};
 
@@ -174,7 +180,7 @@ RQAEmbed::truncated="Resulting truncated series length would be < 0 for this d a
 
 RQAEmbed[ts_,d_,\[Tau]_,OptionsPattern[]]:=Module[{vals,validts,truncTime},
 	validts=If[OptionValue["Truncate"],
-		truncTime=(ts["LastTime"]-(d-1)\[Tau]);
+		truncTime=RQAEmbeddedLastTime[ts,d,\[Tau]];
 		If[truncTime<=0,Message[RQAEmbed::truncated];Null,
 			Map[Select[#,(#<=truncTime&)]&,ts["TimeList"]]],
 		ts["TimeList"]];
@@ -217,15 +223,11 @@ RQARecurrenceMap[ts_,radius_:Automatic,opts:OptionsPattern[]]:=Module[{dm,r},
 
 
 (* ::Subsubsection:: *)
-(*Parameter estimation*)
+(*Parameter estimation - \[Tau]*)
 
 
 (* ::Text:: *)
-(*For some reason, the Autocorrelation and CorrelationFunction in MMa 10/11 don't use the times of the time series, but instead seem to just use the raw "Values" so we need to figure out the time scale/samples/etc. This is the version that Weber et al. use, let's see how well it works.*)
-
-
-(* ::Text:: *)
-(*There is another method proposed that uses the first minimum of the 0-crossings*)
+(*For some reason, the Autocorrelation and CorrelationFunction in MMa 10/11 don't use the times of the time series, but instead seem to just use the raw "Values" so we need to figure out the time scale/samples/etc. First zero crossing of the autocorrelation*)
 
 
 RQAEstimateLag[ts_,\[Tau]max_:Automatic]:=Module[{f,dt,smax,sols,t},
@@ -233,6 +235,10 @@ RQAEstimateLag[ts_,\[Tau]max_:Automatic]:=Module[{f,dt,smax,sols,t},
 	smax=Round[If[\[Tau]max===Automatic,Length[ts["Values"]]/2.0,\[Tau]max/dt]];
 	f=CorrelationFunction[TimeSeriesResample[ts,{1,Length[ts["Values"]],1}],{1,smax}];
 	dt*t/.Quiet[FindRoot[f[t],{t,2,1,smax}]]]
+
+
+(* ::Subsubsection:: *)
+(*Parameter estimation - dimensionality*)
 
 
 (* ::Text:: *)
@@ -243,7 +249,7 @@ RQAEstimateLag[ts_,\[Tau]max_:Automatic]:=Module[{f,dt,smax,sols,t},
 (*I should change this to find the point that is closest that isn't the point in question, more formally. Right now, it just finds the two closest points, and selects the second one since, the first one shouldn't be itself. But I think this might depend on the implementation of Nearest. *)
 
 
-Options[RQANeighbors]={DistanceFunction->Automatic}
+Options[RQANeighbors]={DistanceFunction->Automatic,"Length"->5}
 
 
 (* ::Code:: *)
@@ -256,8 +262,9 @@ Options[RQANeighbors]={DistanceFunction->Automatic}
 (*This version is a mess*)
 
 
-RQANeighbors[ts_,OptionsPattern[]]:=Module[{nf,d,n=5},
+RQANeighbors[ts_,OptionsPattern[]]:=Module[{nf,d,n},
 	d=ts["Values"];
+	n=OptionValue["Length"];
 	nf=Nearest[d,DistanceFunction->OptionValue[DistanceFunction]];
 	
 	MapThread[
@@ -287,7 +294,7 @@ Options[RQANeighborDistances]={DistanceFunction->SquaredEuclideanDistance,"Neigh
 (*The above might not be working anymore since the new embedding results in reduction of the length of the time series. Maybe I shouldn't be doing that?*)
 
 
-RQANeighborDistances[ts_,OptionsPattern[]]:=Module[{n,df},
+RQANeighborDistances[ts_,opts:OptionsPattern[]]:=Module[{n,df},
 	df=OptionValue[DistanceFunction];
 	n=If[OptionValue["Neighbors"]===None,RQANearestNeighbors[ts,DistanceFunction->df],OptionValue["Neighbors"]];
 	MapThread[OptionValue[DistanceFunction],{ts["Values"],ts["Values"][[n]]}]]
@@ -301,34 +308,62 @@ RQANeighborDistances[ts_,OptionsPattern[]]:=Module[{n,df},
 (*	\[Bullet] Does distance increase? If so, false neighbor *)
 
 
-neighborDistanceChange[d1_,d2_]:=MapThread[Norm[{##}]&,{d1,d2}]
+(* ::Text:: *)
+(*Total distance change-*)
 
 
-falseNeighborP[d1_,d2_,thresh_]:=Module[{d},
-	d=neighborDistanceChange[d1,d2];
-	N[Count[d,x_/;x<thresh]/Length[d2]]
+neighborDistanceChange::uneq="Incompatable dimensions."
+
+
+Options[neighborDistanceChange]={DistanceFunction->SquaredEuclideanDistance}
+
+
+neighborDistanceChange[d1_,d2_,OptionsPattern[]]:=
+	MapThread[OptionValue[DistanceFunction],{d1,d2}]
+
+
+Options[falseNeighborP]={DistanceFunction->SquaredEuclideanDistance}
+
+
+falseNeighborP[d1_,d2_,thresh_:Automatic,opts:OptionsPattern[]]:=Module[{d,t},
+	d=neighborDistanceChange[Take[d1,Length[d2]],d2,opts];
+	t=If[thresh===Automatic,Mean[d1],thresh];
+	N[Count[d,x_/;x>t]/Length[d2]]
 ]
 
 
-RQAEstimateDimensionality[ts_,\[Tau]_]:=Module[
-	{pFalse=1.0,dsubE=1,neighbours,d1,d2,embed1,embed2,
-		pThresh=0.05,rthresh,dMax=50}, (* was 10\[Tau] *)
+RQAEstimateDimensionality::dmax="Search exceeded maximum dimensionality: `1`"
 
-	embed2=ts;
-	d2=RQANeighborDistances[embed2];
-	rthresh=10 Mean[d2];Print[rthresh];
+
+Options[RQAEstimateDimensionality]={"Method"->Automatic,"Threshold"->Automatic}
+
+
+RQAEstimateDimensionality[ts_,\[Tau]_,opts:OptionsPattern[]]:=Module[
+	{pFalse=1.0,dsubE=1,pThresh=0.001,dMax=10,to,
+	 da,db,embeda,embedb,
+	 res},
+
+	(* bootstrap *)
+	embedb=ts;
+	db=RQANeighborDistances[embedb];
+	
+	to=OptionValue["Threshold"];
+	pThresh=If[to===Automatic||!NumberQ[to],0.01,to];
 	
 	(* iterate until we fall below pThresh false neighbors *)
-	Reap[
+	res=Reap[
 		While[pFalse>pThresh&&dsubE<dMax,
 			dsubE=dsubE+1;
-			d1=d2;embed1=embed2;
-			embed2=RQAEmbed[ts,dsubE,\[Tau]];
-			d2=RQANeighborDistances[embed2];
-			pFalse=falseNeighborP[Take[d1,Length[d2]],d2,rthresh];
-			Sow[{dsubE,pFalse,Length[d1],Mean[d1],Length[d2],Mean[d2]}];]]
+			da=db;embeda=embedb;
 			
-			]
+			embedb=RQAEmbed[ts,dsubE,\[Tau]];
+			db=RQANeighborDistances[embedb];
+			
+			pFalse=falseNeighborP[da,db];
+			Sow[{dsubE,pFalse}]]];
+			
+	If[dsubE>=dMax,Message[RQAEstimateDimensionality::dmax,dMax,0],		
+	res[[2,-1,-1,1]]]]
 
 
 (* ::Subsubsection:: *)
