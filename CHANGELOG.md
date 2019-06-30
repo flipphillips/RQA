@@ -2,7 +2,7 @@
 
 ## The RQA Package
 
-![](icon.png)
+![icon](icon.png)
 
 <!--
 ## Types of changes
@@ -16,6 +16,19 @@
 -->
 
 ## [Unreleased changes]
+
+### Fixed
+- Better time series support
+
+### Changed
+- Many more options, methods, etc
+
+### Added
+- Readme, Todo, etc.
+
+### Notes
+
+Resurrected as part of the Wolfram Summer School 2019.
 
 ***
 

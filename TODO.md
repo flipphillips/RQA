@@ -1,7 +1,16 @@
 # TODO
 
-![](icon.png)
+![icon](icon.png)
 
 ## Tests
-
+- Embedding tests
+- Tau tests
+  
 ## Measures
+- Older measures like CORM?
+
+## Validate
+- Finish implementation of the Estimation of Embeding Dimentions. I based this on an older Kennel reference, but there is a new kid in town
+
+Kennel, M. B., & Abarbanel, H. D. I. (2002). False neighbors and false strands: a reliable minimum embedding dimension algorithm. *Physical Review. E, Statistical, Nonlinear, and Soft Matter Physics,* 66(2 Pt 2), 026209–026218. https://doi.org/10.1103/PhysRevE.66.026209
+

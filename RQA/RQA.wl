@@ -126,7 +126,7 @@ Unprotect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,RQANeighbors,RQANearestNeigh
 (*Definition of the exported functions*)
 
 
-(* ::Text:: *)
+(* ::Subsubsection:: *)
 (*Utility functions*)
 
 
@@ -139,6 +139,10 @@ RQAMakeTimeSeries[data_,dt_,t0_:0]:=
 
 RQATimeSeriesEpochs[ts_,wid_,overlap_]:=
 Table[TimeSeriesWindow[ts,{t0,t0+wid}],{t0,ts["FirstTime"],ts["LastTime"]-wid,overlap}]
+
+
+(* ::Subsubsection:: *)
+(*Embedding and map generation*)
 
 
 (* ::Text:: *)
@@ -210,6 +214,10 @@ RQARecurrenceMap[ts_,radius_:Automatic,opts:OptionsPattern[]]:=Module[{dm,r},
 	dm=RQADistanceMap[ts,opts];
 	r=If[radius===Automatic,Mean[Flatten[dm]],radius];
 	Map[HeavisideTheta[r-#]&,dm,{2}]]
+
+
+(* ::Subsubsection:: *)
+(*Parameter estimation*)
 
 
 (* ::Text:: *)
@@ -286,7 +294,11 @@ RQANeighborDistances[ts_,OptionsPattern[]]:=Module[{n,df},
 
 
 (* ::Text:: *)
-(*Find 'false' neighbors as per  Kennel et al 1992. The 'threshold' of '10' I don't fully understand.*)
+(*Find 'false' neighbors as per  Kennel et al 1992 and 2002. Basically:*)
+(*	\[Bullet] Find nearest neighbors in dimension d*)
+(*	\[Bullet] Compute distances*)
+(*	\[Bullet] Embed in d+1*)
+(*	\[Bullet] Does distance increase? If so, false neighbor *)
 
 
 neighborDistanceChange[d1_,d2_]:=MapThread[Norm[{##}]&,{d1,d2}]
@@ -294,7 +306,6 @@ neighborDistanceChange[d1_,d2_]:=MapThread[Norm[{##}]&,{d1,d2}]
 
 falseNeighborP[d1_,d2_,thresh_]:=Module[{d},
 	d=neighborDistanceChange[d1,d2];
-	Print[Min[d]];
 	N[Count[d,x_/;x<thresh]/Length[d2]]
 ]
 
@@ -321,7 +332,7 @@ RQAEstimateDimensionality[ts_,\[Tau]_]:=Module[
 
 
 (* ::Subsubsection:: *)
-(*Quantities*)
+(*Metrics*)
 
 
 RQARecurrence[rm_]:=Module[{ut,w,nMax,nRP},
