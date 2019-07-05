@@ -17,6 +17,18 @@
 
 ## [Unreleased changes]
 
+### Changed
+- `DimensionalityEstimation` works but with old 'false neighbor' threshold. 
+  
+### Added
+- `EmbeddedLastTime` gives last moment in an embedded TS.
+
+***
+
+## [0.1.1] - 2019-06-29
+
+Semi-released to Alison Ord for playing around with. 
+
 ### Fixed
 - Better time series support
 
@@ -26,13 +38,11 @@
 ### Added
 - Readme, Todo, etc.
 
-### Notes
-
-Resurrected as part of the Wolfram Summer School 2019.
-
 ***
 
 ## [0.1.0] - 2019-06-26
+
+Resurrected as part of the Wolfram Summer School 2019.
 
 ### Added
 
