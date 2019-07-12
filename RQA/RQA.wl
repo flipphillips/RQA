@@ -8,7 +8,7 @@
 (* :Context: RQA` *)
 (* :Author: Flip Phillips *)
 (* :Summary: This package provides various things and stuff to Mathematica. *)
-(* :Package Version: 1.5 *)
+(* :Package Version: 0.1.1 *)
 (* :Mathematica Version: 10.0+ *)
 (* :Copyright: Copyright 1988-2019, Flip Phillips, All Rights Reserved.  *)
 (* :History: *)
@@ -91,6 +91,12 @@ RQAEntropy::usage=""
 RQAChaos::usage=""
 
 
+RQADmax::usage=""
+
+
+RQAVmax::usage=""
+
+
 (* ::Text:: *)
 (*Utility Functions*)
 
@@ -109,11 +115,11 @@ Begin["`Private`"]
 
 
 (* ::Subsection:: *)
-(*Unprotect any system functions for which rules will be defined*)
+(*Unprotect any functions for which rules will be defined*)
 
 
 Unprotect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,RQANeighbors,RQANearestNeighbors,RQANeighborDistances,RQAEstimateDimensionality,RQAEstimateLag,
-	RQARecurrence,RQADeterminism,RQALaminarity,RQATrappingTime,RQATrend,RQAEntropy,RQAChaos,
+	RQARecurrence,RQADeterminism,RQALaminarity,RQATrappingTime,RQATrend,RQAEntropy,RQADmax,RQAChaos,RQAVmax,
 	RQAMakeTimeSeries,RQATimeSeriesEpochs}]
 
 
@@ -457,6 +463,23 @@ RQAChaos[rm_,thresh_:2]:=Module[{ut,w,diags,segLens,lens,nRP},
 ]/;SquareMatrixQ[rm]
 
 
+RQADmax[rm_,thresh_:2]:=Module[{ut,w,diags,segLens,lens,nRP},ut=UpperTriangularize[rm,1];
+	w=First[Dimensions[rm]];
+	diags=Diagonal[ut,#]&/@Range[1,w-1];
+	segLens=segmentLengths[diags,thresh];
+	lens=Total/@segLens;
+	Max[segLens]
+	]/;SquareMatrixQ[rm]
+
+
+RQAVmax[rm_,thresh_:2]:=Module[{ut,verts,segLens,lens,nRP},ut=UpperTriangularize[rm,1];
+	verts=Transpose[ut];
+	segLens=segmentLengths[verts,thresh];
+	lens=Total/@segLens;
+	Max[segLens]
+]/;SquareMatrixQ[rm]
+
+
 (* ::Subsection:: *)
 (*Rules for the system functions*)
 
@@ -477,7 +500,7 @@ End[]
 
 
 Protect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,RQANeighbors,RQANearestNeighbors,RQANeighborDistances,RQAEstimateDimensionality,RQAEstimateLag,
-	RQARecurrence,RQADeterminism,RQALaminarity,RQATrappingTime,RQATrend,RQAEntropy,RQAChaos,
+	RQARecurrence,RQADeterminism,RQALaminarity,RQATrappingTime,RQATrend,RQAEntropy,RQADmax,RQAChaos,RQAVmax,
 	RQAMakeTimeSeries,RQATimeSeriesEpochs}]
 
 
