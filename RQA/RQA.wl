@@ -25,6 +25,15 @@ BeginPackage["RQA`"]
 
 
 (* ::Subsection:: *)
+(*Unprotect exported symbols*)
+
+
+Unprotect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,RQANeighbors,RQANearestNeighbors,RQANeighborDistances,RQAEstimateDimensionality,RQAEstimateLag,
+	RQARecurrence,RQADeterminism,RQALaminarity,RQATrappingTime,RQATrend,RQAEntropy,RQAChaos,
+	RQAMakeTimeSeries,RQATimeSeriesEpochs}]
+
+
+(* ::Subsection:: *)
 (*Usage Messages*)
 
 
@@ -112,11 +121,6 @@ Begin["`Private`"]
 (*Unprotect any system functions for which rules will be defined*)
 
 
-Unprotect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,RQANeighbors,RQANearestNeighbors,RQANeighborDistances,RQAEstimateDimensionality,RQAEstimateLag,
-	RQARecurrence,RQADeterminism,RQALaminarity,RQATrappingTime,RQATrend,RQAEntropy,RQAChaos,
-	RQAMakeTimeSeries,RQATimeSeriesEpochs}]
-
-
 (* ::Subsection:: *)
 (*Definition of auxiliary functions and local (static) variables*)
 
@@ -134,14 +138,14 @@ Unprotect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,RQANeighbors,RQANearestNeigh
 
 
 RQAMakeTimeSeries[data_,dt_,t0_:0]:=
-	TimeSeries[
-		TemporalData[data,{t0,Automatic,dt},
-			ValueDimensions->Length[Dimensions[data]]],
-		ResamplingMethod->Automatic]
+  TimeSeries[
+    TemporalData[data,{t0,Automatic,dt},
+	  ValueDimensions->Length[Dimensions[data]]],
+	  ResamplingMethod->Automatic]
 
 
 RQATimeSeriesEpochs[ts_,wid_,overlap_]:=
-Table[TimeSeriesWindow[ts,{t0,t0+wid}],{t0,ts["FirstTime"],ts["LastTime"]-wid,overlap}]
+  Table[TimeSeriesWindow[ts,{t0,t0+wid}],{t0,ts["FirstTime"],ts["LastTime"]-wid,wid-overlap}]
 
 
 (* ::Subsubsection:: *)
