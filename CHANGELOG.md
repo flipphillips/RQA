@@ -22,10 +22,11 @@
   
 ### Added
 - `EmbeddedLastTime` gives last moment in an embedded TS.
+- Added `Dmax` and `Vmax` as per <https://github.com/alisono2>
 
 ***
 
-## [0.1.1] - 2019-06-29
+## [0.1.1 - dev] - 2019-06-29
 
 Semi-released to Alison Ord for playing around with. 
 
