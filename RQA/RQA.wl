@@ -41,7 +41,7 @@ Unprotect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,RQANeighbors,RQANearestNeigh
 (*Package*)
 
 
-RQA::usage="RQA is a package which provides RQA."
+RQA::usage="RQA is a package which provides a suite of basic Recurrance Quantification Analysis functions to Mathematica."
 
 
 (* ::Text:: *)
