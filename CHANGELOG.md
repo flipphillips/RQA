@@ -18,11 +18,13 @@
 ## [Unreleased changes]
 
 ### Changed
-- `DimensionalityEstimation` works but with old 'false neighbor' threshold. 
+- `DimensionalityEstimation` works but with old 'false neighbor' threshold.
+- Moved `icon.png` to `Documentation` tree
   
 ### Added
 - `EmbeddedLastTime` gives last moment in an embedded TS.
 - Added `Dmax` and `Vmax` as per <https://github.com/alisono2>
+- Added `PacletInfo`
 
 ***
 

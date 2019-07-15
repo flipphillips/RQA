@@ -1,10 +1,10 @@
 #!/usr/bin/env wolframscript
 (* ::Package:: *)
 
-packaegName="RQA";
+packageName ="RQA";
 
 
-dir = FileNameJoin[{$UserBaseDirectory, "Applications", packaegName}];
+dir = FileNameJoin[{$UserBaseDirectory, "Applications", packageName}];
 Print["Installing into "<>dir];
 
 
@@ -12,7 +12,10 @@ Print["Installing into "<>dir];
 (*OK, this is a shell script and won't work for windows installing, but, I don't use windows much. It just makes a symbolic link from here to make things a little easier to debug.*)
 
 
-res = Run["ln -sf ./RQA "<>dir];
+here = FileNameJoin[{DirectoryName[$InputFileName],packageName}]
+
+
+res = Run["ln -sf " <> here <> " " <> dir];
 
 
 Print["Done: "<>ToString[res]]

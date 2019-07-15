@@ -1,6 +1,6 @@
 # RQA
 
-![logo](icon.png)
+![logo](RQA/Documentation/icon.png)
 
 v 0.1.0
 
