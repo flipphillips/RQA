@@ -2,7 +2,7 @@
 
 ## The RQA Package
 
-![icon](icon.png)
+![logo](RQA/Documentation/icon.png)
 
 <!--
 ## Types of changes
@@ -18,27 +18,36 @@
 ## [Unreleased changes]
 
 ### Changed
+
 - `DimensionalityEstimation` works but with old 'false neighbor' threshold.
 - Moved `icon.png` to `Documentation` tree
+- Redesigned `EstimateDimensionality` a little to handle errors better. Still not happy with it.
   
 ### Added
+
 - `EmbeddedLastTime` gives last moment in an embedded TS.
-- Added `Dmax` and `Vmax` as per <https://github.com/alisono2>
-- Added `PacletInfo`
+- `Dmax` and `Vmax` as per <https://github.com/alisono2>
+- `PacletInfo`
+- Warning message for irregular sampling
+- Documentation path
+- Some usage messages
 
 ***
 
 ## [0.1.1 - dev] - 2019-06-29
 
-Semi-released to Alison Ord for playing around with. 
+Semi-released to Alison Ord for playing around with.
 
 ### Fixed
+
 - Better time series support
 
 ### Changed
+
 - Many more options, methods, etc
 
 ### Added
+
 - Readme, Todo, etc.
 
 ***

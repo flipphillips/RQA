@@ -45,75 +45,75 @@ RQA::usage="RQA is a package which provides a suite of basic Recurrance Quantifi
 
 
 (* ::Text:: *)
-(*Building the map*)
+(*Building the map and embeddings*)
 
 
-RQAEmbeddedLastTime::usage="RQAEmbeddedLastTime[ts,d,t] returns the last valid time for an embedding in dimension d for lag t."
+RQAEmbeddedLastTime::usage="RQAEmbeddedLastTime[ts,d,tau] returns the last valid time for an embedding in dimension d for lag tau."
 
 
-RQAEmbed::usage="RQAEmbed[ts,dims,tau] but why."
+RQAEmbed::usage="RQAEmbed[ts,d,tau] embeds time series ts into d dimensions with a lag of tau."
 
 
-RQADistanceMap::usage=""
+RQADistanceMap::usage="RQADistanceMap[ts] computes a distance map of all samples to all other samples in time series ts. Note that ts is assumed to be regularly sampled."
 
 
-RQARecurrenceMap::usage=""
+RQARecurrenceMap::usage="RQARecurrenceMap[ts,r] computes a recurrence map from ts, using a recurrence raduis r."
 
 
-RQANeighbors::usage=""
+RQANeighbors::usage="RQANeighbors[ts] computes a neighborhood for each sample in ts. Number of neighbors and distance functions are available as options."
 
 
-RQANearestNeighbors::usage=""
+RQANearestNeighbors::usage="RQANearestNeighbors[ts] computes a singular nearest neighbor for each value in ts."
 
 
-RQANeighborDistances::usage=""
+RQANeighborDistances::usage="RQANeighborDistances[ts] computes the distance to each nearest neighbor for each value in ts."
 
 
-RQAEstimateDimensionality::usage=""
+RQAEstimateDimensionality::usage="RQAEstimateDimensionality[ts,tau] estimates the proper embedding dimension for a given lag tau using the false-neighbor algorithm."
 
 
-RQAEstimateLag::usage=""
+RQAEstimateLag::usage="RQAEstimateLag[ts] estimates an appropriate lag / tau for a given time series using the decorrelation method."
 
 
 (* ::Text:: *)
 (*Estimating the parameters*)
 
 
-RQARecurrence::usage=""
+RQARecurrence::usage="RQAEstimateLag[rm] calculates the recurrence for map rm."
 
 
-RQADeterminism::usage=""
+RQADeterminism::usage="RQADeterminism[rm,l:2] calculates the determinism for map rm. Optionally accepts a minimum length run, defaults to 2."
 
 
-RQALaminarity::usage=""
+RQALaminarity::usage="RQALaminarity[rm,l:2] calculates the laminarity for map rm. Optionally accepts a minimum length run, defaults to 2."
 
 
-RQATrappingTime::usage=""
+RQATrappingTime::usage="RQATrappingTime[rm,l:2] calculates the trapping time for map rm. Optionally accepts a minimum length run, defaults to 2."
 
 
-RQATrend::usage=""
+RQATrend::usage="RQATrend[rm] calculates the trend for map rm."
 
 
-RQAEntropy::usage=""
+RQAEntropy::usage="RQAEntropy[rm] calculates entropy for map rm. Optionally accepts a minimum length run, defaults to 2."
 
 
-RQAChaos::usage=""
+RQAChaos::usage="RQAChaos[rm] calculates chaos for map rm. Optionally accepts a minimum length run, defaults to 2."
 
 
-RQADmax::usage=""
+RQADmax::usage="RQADmax[rm] calculates Dmax for map rm. Optionally accepts a minimum length run, defaults to 2."
 
 
-RQAVmax::usage=""
+RQAVmax::usage="RQAVmax[rm] calculates Vmax for map rm. Optionally accepts a minimum length run, defaults to 2."
 
 
 (* ::Text:: *)
 (*Utility Functions*)
 
 
-RQAMakeTimeSeries::usage=""
+RQAMakeTimeSeries::usage="RQAMakeTimeSeries[data,dt,t0] creates a regularly sampled time series from data, using dt as a time-step and, optionally t0 for starting time."
 
 
-RQATimeSeriesEpochs::usage=""
+RQATimeSeriesEpochs::usage="RQATimeSeriesEpochs[ts,wid,overlap] creates a list of time series of a given width and overlap."
 
 
 (* ::Subsection:: *)
@@ -181,22 +181,10 @@ Options[RQAEmbed]={
 RQAEmbed::truncated="Resulting truncated series length would be < 0 for this d and \[Tau].";
 
 
-(* ::Code:: *)
-(*RQAEmbed[ts_,d_,\[Tau]_,OptionsPattern[]]:=Module[{vals,validts},*)
-(*	validts=If[OptionValue["Truncate"],*)
-(*	  Map[*)
-(*		Select[#,(#<=(ts["LastTime"]-\[Tau])&)]&,ts["TimeList"]],*)
-(*	  ts["TimeList"]];*)
-(*	  *)
-(*	vals=MapThread[embedHelper[#1,#2,d,\[Tau]]&,*)
-(*		{Take[ts["PathFunction",All],Length[validts]],validts}];*)
-(*	TimeSeries[TemporalData[vals],ResamplingMethod->OptionValue[ResamplingMethod]]]*)
-
-
 RQAEmbed[ts_,d_,\[Tau]_,OptionsPattern[]]:=Module[{vals,validts,truncTime},
 	validts=If[OptionValue["Truncate"],
 		truncTime=RQAEmbeddedLastTime[ts,d,\[Tau]];
-		If[truncTime<=0,Message[RQAEmbed::truncated];Null,
+		If[truncTime<=0,Message[RQAEmbed::truncated];Return[Null],
 			Map[Select[#,(#<=truncTime&)]&,ts["TimeList"]]],
 		ts["TimeList"]];
 	  
@@ -211,7 +199,10 @@ RQAEmbed[ts_,d_,\[Tau]_,OptionsPattern[]]:=Module[{vals,validts,truncTime},
 
 Options[RQADistanceMap]={
 	DistanceFunction->SquaredEuclideanDistance,
-	"Rescale"->False,"RescaleFunction"->Automatic}
+	"Rescale"->False,"RescaleFunction"->Automatic};
+
+
+RQADistanceMap::irreg="Time series is not regularly sampled.";
 
 
 RQADistanceMap[ts_,OptionsPattern[]]:=Module[{df,rescale,map,rf},
@@ -219,6 +210,9 @@ RQADistanceMap[ts_,OptionsPattern[]]:=Module[{df,rescale,map,rf},
 	rescale=OptionValue["Rescale"];
 	rf=OptionValue["RescaleFunction"];
 	rf=If[rf===Automatic,Rescale,rf];
+	
+	(* handle this in the future *)
+	If[!RegularlySampledQ[ts],Message[RQADistanceMap::irreg]];
 	
 	map=Outer[df,ts["Values"],ts["Values"],1];
 	If[rescale,rf[map],map]]
@@ -354,31 +348,37 @@ Options[RQAEstimateDimensionality]={"Method"->Automatic,"Threshold"->Automatic}
 
 
 RQAEstimateDimensionality[ts_,\[Tau]_,opts:OptionsPattern[]]:=Module[
-	{pFalse=1.0,dsubE=1,pThresh=0.001,dMax=10,to,
-	 da,db,embeda,embedb,
-	 res},
+	{pFalse,dsubE=2,pThresh,dMax=10,
+	 to,
+	 da,db,embed},
 
-	(* bootstrap *)
-	embedb=ts;
-	db=RQANeighborDistances[embedb];
-	
+    (* options *)
 	to=OptionValue["Threshold"];
 	pThresh=If[to===Automatic||!NumberQ[to],0.01,to];
+
+	(* bootstrap while loop *)
+	da=RQANeighborDistances[ts];
+	embed=RQAEmbed[ts,dsubE,\[Tau]];
+	If[embed===Null,Return[1]];
+	db=RQANeighborDistances[embed];
+	pFalse=falseNeighborP[da,db,pThresh];Print[pFalse];
 	
 	(* iterate until we fall below pThresh false neighbors *)
-	res=Reap[
-		While[pFalse>pThresh&&dsubE<dMax,
-			dsubE=dsubE+1;
-			da=db;embeda=embedb;
+	While[pFalse>pThresh && dsubE<=dMax,
+		dsubE=dsubE+1;
+		da=db;
 			
-			embedb=RQAEmbed[ts,dsubE,\[Tau]];
-			db=RQANeighborDistances[embedb];
+		embed=RQAEmbed[ts,dsubE,\[Tau]];
+		If[embed===Null,Return[1]];
+		db=RQANeighborDistances[embed];
+		pFalse=falseNeighborP[da,db,pThresh];Print[pFalse];
+		];
 			
-			pFalse=falseNeighborP[da,db];
-			Sow[{dsubE,pFalse}]]];
-			
-	If[dsubE>=dMax,Message[RQAEstimateDimensionality::dmax,dMax,0],		
-	res[[2,-1,-1,1]]]]
+	If[dsubE>=dMax,
+	  Message[RQAEstimateDimensionality::dmax,dMax];1,
+	  dsubE]
+	]		
+	
 
 
 (* ::Subsubsection:: *)
