@@ -18,7 +18,7 @@
 
 ## Validate
 
-- Finish implementation of the Estimation of Embeding Dimentions. I based this on an older Kennel reference, but there is a new kid in town
+- Finish implementation of the Estimation of Embedding Dimensions. I based this on an older Kennel reference, but there is a new kid in town
 
 ## Notes
 
