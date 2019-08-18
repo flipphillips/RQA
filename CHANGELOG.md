@@ -17,7 +17,14 @@
 
 ## [Unreleased changes]
 
+### Changed
+
+- `README.md` has installation instructions.
+
+
 ## [0.2.0] - 2019-08-18
+
+Released up-to-date version with changed documentation and calculation methods.
 
 ### Changed
 

@@ -1,9 +1,9 @@
 {
   "name": "RQA",
-  "prerelease": falst,
+  "prerelease": true,
   "major_version": 0,
   "minor_version": 2,
-  "revision_number": 0,
-  "build_number": 15,
-  "date": "Sun Aug 18 13:07:21 EDT 2019"
+  "revision_number": 1,
+  "build_number": 16,
+  "date": "Sun Aug 18 14:58:25 EDT 2019"
 }
