@@ -20,6 +20,7 @@
 ### Changed
 
 - `README.md` has installation instructions.
+- `README.md` has documentation png.
 
 
 ## [0.2.0] - 2019-08-18

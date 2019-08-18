@@ -32,3 +32,11 @@ The nice thing about this method is that, when you update/pull fresh versions of
 ## Repository Notebook Viewer
 
 [![View notebooks](https://wolfr.am/Etv7EZ90)](https://wolfr.am/FFDrp9F5)
+
+## Documentation
+
+![dochowto](RQA/Documentation/dochowto.png)
+
+## People
+
+[flipphillips.com][https://flipphillips.com]

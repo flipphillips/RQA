@@ -7,6 +7,11 @@
 - Check for `RegularlySampledQ`
 - Even better, allow for non time series and allow for re-sampling option.
 
+## RM
+
+- Change routines to ues sparse matrix, single representation of distance map rather than the binary version.
+- Alternately, use distance map but keep distance in rm
+
 ## Tests
 
 - Embedding tests
