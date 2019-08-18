@@ -17,12 +17,14 @@
 
 ## [Unreleased changes]
 
+A major revision that uses the definitions from the Webber book, sparse arrays, and other tools instead of the brute force stuff we were using before.
+
 ### Changed
 
 - `README.md` has installation instructions.
 - `README.md` has documentation png.
 - Two versions of `RecurrenceMap` that take either a distance map or timeseries and return a continuous RM instead of a binary one.
-
+- Routines refactored again for parameter estimation.
 
 ## [0.2.0] - 2019-08-18
 

@@ -23,7 +23,7 @@
 
 (* ::Text:: *)
 (*Version 0.1 - Based on a ton of papers that were not the Webber originals, but instead the interpretative work of others. *)
-(*Version 0.2 - Based on the paper in the Dynsys NSF book, by Webber.*)
+(*Version 0.2 - Based on the paper in the Dynsys NSF book.  Webber Jr, C. L., & Zbilut, J. P. (2005). Recurrence quantification analysis of nonlinear dynamical systems. Tutorials in contemporary nonlinear methods for the behavioral sciences, 94, 26-94. https://www.nsf.gov/pubs/2005/nsf05057/nmbs/chap2.pdf*)
 (*Version 0.3 - Based on Webber Jr, C. L., & Marwan, N. (2015). Recurrence quantification analysis. Theory and Best Practices. Springer.*)
 
 
@@ -213,7 +213,7 @@ RQAEmbeddedLastTime[ts_,d_,\[Tau]_]:=(ts["LastTime"]-(d-1)\[Tau])
 
 
 Options[RQAEmbed]={
-	"Truncate"->True,ResamplingMethod->Automatic};
+	"Truncate"->True,ResamplingMethod->Automatic,"Periodic"->False};
 
 
 RQAEmbed::truncated="Resulting truncated series length would be < 0 for this d and \[Tau].";
@@ -452,28 +452,58 @@ RQAEstimateDimensionality[ts_,\[Tau]_,opts:OptionsPattern[]]:=Module[
 
 
 (* ::Text:: *)
-(*private halpers*)
+(*There are a lot of things that, in v0.1 and 0.2, were upper-triangular related. That makes sense for symmetric systems. (See issues where this might not be the case for certain, asymmetric neighborhoods) We're getting away from that so we don't have to generalize. Also, it turns out that some recurrence maps include the LOI. In this case, why bother, I think.*)
+
+
+(* ::Text:: *)
+(*big-N*)
 
 
 size[rm_]:=First[Dimensions[rm]]
 
 
-upperTriangularMax[rm_]:=(size[rm](size[rm]-1)/2)
+nWithLOI[rm_]:=size[rm]^2
+
+
+nNoLOI[rm_]:=(nWithLOI[rm]-size[rm])
+
+
+nUpperTriangular[rm_]:=(size[rm](size[rm]-1)/2)
+
+
+(* ::Text:: *)
+(*thresholders - there are probably better ways to do this, but for now.*)
+
+
+(* ::Text:: *)
+(*Segment counters - these don't care about triangularity*)
 
 
 runLength[list_]:={First[#],Length[#]}&/@Split[list]
 
 
 segmentLengths[m_,tLen_:2]:=Module[{rl,selFun,n},
-	rl=runLength/@m;
+	rl=runLength/@Normal[Unitize[m]];
 	selFun=Select[#[[1]]==1\[And]#[[2]]>=tLen&];
 	(selFun/@rl)/.{{}->{0},{1,n_}->n}]
 
 
-verticalSegments[rm_]:= Transpose[UpperTriangularize[rm,1]]/;SquareMatrixQ[rm]
+(* ::Text:: *)
+(*Segment makers*)
 
 
-diagonalSegments[rm_]:= Diagonal[UpperTriangularize[rm,1],#]&/@Range[1,size[rm]-1] /;SquareMatrixQ[rm]
+(* ::Code:: *)
+(*verticalSegments[rm_]:= Transpose[UpperTriangularize[rm,1]]/;SquareMatrixQ[rm]*)
+
+
+verticalSegments[rm_]:= Transpose[rm]/;SquareMatrixQ[rm]
+
+
+(* ::Code:: *)
+(*diagonalSegments[rm_]:= Diagonal[UpperTriangularize[rm,1],#]&/@Range[1,size[rm]-1] /;SquareMatrixQ[rm]*)
+
+
+diagonalSegments[rm_]:= Diagonal[rm,#]&/@Range[-(size[rm]-1),size[rm]-1]/;SquareMatrixQ[rm]
 
 
 (* ::Text:: *)
@@ -494,7 +524,12 @@ RQANVerticalLines[rm_,thresh_:2]:=Length[RQAVerticalLineLengths[rm,thresh]]
 RQANDiagonalLines[rm_,thresh_:2]:=Length[RQADiagonalLineLengths[rm,thresh]]
 
 
-RQANLines[rm_,thresh_:2]:=RQANVerticalLines[rm,thresh]+RQANDiagonalLines[rm,thresh]
+(* ::Text:: *)
+(*Just wrong*)
+
+
+(* ::Code:: *)
+(*RQANLines[rm_,thresh_:2]:=RQANVerticalLines[rm,thresh]+RQANDiagonalLines[rm,thresh]*)
 
 
 RQANVerticalRecurrentPoints[rm_,thresh_:2]:=Total[RQAVerticalLineLengths[rm,thresh]]
@@ -503,25 +538,30 @@ RQANVerticalRecurrentPoints[rm_,thresh_:2]:=Total[RQAVerticalLineLengths[rm,thre
 RQANDiagonalRecurrentPoints[rm_,thresh_:2]:=Total[RQADiagonalLineLengths[rm,thresh]]
 
 
-RQANRecurrentPoints[rm_,thresh_:2]:=RQANVerticalRecurrentPoints[rm,thresh]+RQANDiagonalRecurrentPoints[rm,thresh]
+(* ::Text:: *)
+(*This was just, well, wrong.*)
+
+
+(* ::Code:: *)
+(*RQANRecurrentPoints[rm_,thresh_:2]:=RQANVerticalRecurrentPoints[rm,thresh]+RQANDiagonalRecurrentPoints[rm,thresh]*)
+
+
+RQANRecurrentPoints[rm_SparseArray]:=Length[rm["NonzeroValues"]]
+
+
+RQANRecurrentPoints[rm_]:=Count[rm,x_/;!PossibleZeroQ[x],{2}]
 
 
 (* ::Subsubsection:: *)
 (*Main estimators*)
 
 
-(* ::Code:: *)
-(*RQARecurrence[rm_,thresh_:2]:=*)
-(*	(RQANRecurrentPoints[rm,thresh]/upperTriangularMax[rm]) /; SquareMatrixQ[rm]*)
-
-
-RQARecurrence[rm_SparseArray]:=Module[{nN},
-	nN=size[rm];
-	Length[rm["NonzeroValues"]]/(nN^2-nN)]/;SquareMatrixQ[rm]
+RQARecurrence[rm_SparseArray]:=
+	RQANRecurrentPoints[rm]/nNoLOI[rm]/;SquareMatrixQ[rm]
 
 
 RQADeterminism[rm_,thresh_:2]:=
-	(RQANDiagonalRecurrentPoints[rm,thresh]/RQANRecurrentPoints[rm,thresh]) /; SquareMatrixQ[rm]
+	(RQANDiagonalRecurrentPoints[rm,thresh]/RQANRecurrentPoints[rm]) /; SquareMatrixQ[rm]
 
 
 RQALaminarity[rm_,thresh_:2]:=
