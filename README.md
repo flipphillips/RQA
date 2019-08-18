@@ -37,6 +37,12 @@ The nice thing about this method is that, when you update/pull fresh versions of
 
 ![dochowto](RQA/Documentation/dochowto.png)
 
+## Version History
+
+* Version 0.1 - Based on a ton of papers that were not the Webber originals, but rather the interpretative work of others.
+* Version 0.2 - Based on the paper in the dynsys NSF book. Webber Jr, C. L., & Zbilut, J. P. (2005). Recurrence quantification analysis of nonlinear dynamical systems. _Tutorials in contemporary nonlinear methods for the behavioral sciences_, 94, 26-94. <https://www.nsf.gov/pubs/2005/nsf05057/nmbs/chap2.pdf>
+* Version 0.3 - Based on Webber Jr, C. L., & Marwan, N. (2015). _Recurrence quantification analysis. Theory and Best Practices._ Springer.
+
 ## People
 
 [flipphillips.com][https://flipphillips.com]

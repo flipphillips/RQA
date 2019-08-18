@@ -8,13 +8,23 @@
 (* :Context: RQA` *)
 (* :Author: Flip Phillips *)
 (* :Summary: This package provides various things and stuff to Mathematica. *)
-(* :Package Version: 0.2 *)
+(* :Package Version: 0.3.0 *)
 (* :Mathematica Version: 10.0+ *)
-(* :Copyright: Copyright 1988-2019, Flip Phillips, All Rights Reserved.  *)
+(* :Copyright: Copyright 2014-2019, Flip Phillips, All Rights Reserved.  *)
 (* :History: *)
-(* :Keywords: packages, path, keywords *)
+(* :Keywords: dynsys, dynamical systems,  *)
 (* :Limitations:  *)
 (* :Discussion:  *)
+
+
+(* ::Text:: *)
+(*Some special version notes:*)
+
+
+(* ::Text:: *)
+(*Version 0.1 - Based on a ton of papers that were not the Webber originals, but instead the interpretative work of others. *)
+(*Version 0.2 - Based on the paper in the Dynsys NSF book, by Webber.*)
+(*Version 0.3 - Based on Webber Jr, C. L., & Marwan, N. (2015). Recurrence quantification analysis. Theory and Best Practices. Springer.*)
 
 
 (* ::Section:: *)
@@ -78,7 +88,7 @@ RQAEstimateDimensionality::usage="RQAEstimateDimensionality[ts,tau] estimates th
 RQAEstimateLag::usage="RQAEstimateLag[ts] estimates an appropriate lag / tau for a given time series using the decorrelation method."
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Structure helpers*)
 
 
@@ -156,16 +166,24 @@ Begin["`Private`"]
 (*Definition of auxiliary functions and local (static) variables*)
 
 
+(* ::Text:: *)
+(*These are inline / adjacent as I don't like this particular format.*)
+
+
 (* ::Subsection:: *)
 (*Error messages for the exported objects*)
+
+
+(* ::Text:: *)
+(*These are inline / adjacent as I don't like this particular format.*)
 
 
 (* ::Subsection:: *)
 (*Definition of the exported functions*)
 
 
-(* ::Subsubsection::Closed:: *)
-(*Utility functions*)
+(* ::Subsubsection:: *)
+(*TimeSeries functions*)
 
 
 RQAMakeTimeSeries[data_,dt_,t0_:0]:=
@@ -180,7 +198,7 @@ RQATimeSeriesEpochs[ts_,wid_,overlap_]:=
 
 
 (* ::Subsubsection:: *)
-(*Embedding and map generation*)
+(*Embedding*)
 
 
 (* ::Text:: *)
@@ -213,8 +231,20 @@ RQAEmbed[ts_,d_,\[Tau]_,OptionsPattern[]]:=Module[{vals,validts,truncTime},
 	TimeSeries[TemporalData[vals],ResamplingMethod->OptionValue[ResamplingMethod]]]
 
 
+(* ::Subsubsection:: *)
+(*Map generation*)
+
+
 (* ::Text:: *)
-(*Compute a distance map (DM). Note that I should change the Rescale option to support other sorts of methods other than the max method.*)
+(*Helpers*)
+
+
+brutalHeavisideTheta[x_]:=0/;PossibleZeroQ[x]
+brutalHeavisideTheta[x_]:=HeavisideTheta[x]
+
+
+(* ::Text:: *)
+(*Compute a distance map (DM). *)
 
 
 Options[RQADistanceMap]={
@@ -231,7 +261,8 @@ RQADistanceMap[ts_,OptionsPattern[]]:=Module[{df,rescale,map,rf},
 	rf=OptionValue["RescaleFunction"];
 	rf=If[rf===Automatic,Rescale,rf];
 	
-	(* handle this in the future *)
+	(* handle this in the future, for now, this just throws an error. 
+		we could have an option that tells what to do otherwise. *)
 	If[!RegularlySampledQ[ts],Message[RQADistanceMap::irreg]];
 	
 	map=Outer[df,ts["Values"],ts["Values"],1];
@@ -239,16 +270,31 @@ RQADistanceMap[ts_,OptionsPattern[]]:=Module[{df,rescale,map,rf},
 
 
 (* ::Text:: *)
-(*Create the RM using a simple, automatic threshold. Again, I should be more clever about this.*)
+(*Create the RM using a simple, automatic threshold. As of version 0.2.1, this creates a non-binary recurrence map. Distances are included.*)
 
 
-Options[RQARecurrenceMap]={DistanceFunction->SquaredEuclideanDistance,"Rescale"->False,"RescaleFunction"->Automatic}
+Options[RQARecurrenceMap]={
+	DistanceFunction->SquaredEuclideanDistance,
+	"Rescale"->False,"RescaleFunction"->Automatic}
 
 
-RQARecurrenceMap[ts_,radius_:Automatic,opts:OptionsPattern[]]:=Module[{dm,r},
+(* ::Text:: *)
+(*Two forms- if a time series is provided, compute the distance map and throw it away. *)
+
+
+RQARecurrenceMap[ts_TemporalData,radius_:Automatic,opts:OptionsPattern[]]:=Module[{dm,r,map},
 	dm=RQADistanceMap[ts,opts];
 	r=If[radius===Automatic,Mean[Flatten[dm]],radius];
-	Map[HeavisideTheta[r-#]&,dm,{2}]]
+	SparseArray[Map[brutalHeavisideTheta[r-#]&,dm,{2}]*dm]]
+
+
+(* ::Text:: *)
+(*But, if a distance map is provided, make a different thing.*)
+
+
+RQARecurrenceMap[dm_,radius_:Automatic,opts:OptionsPattern[]]:=Module[{r},
+	r=If[radius===Automatic,Mean[Flatten[dm]],radius];
+	SparseArray[Map[brutalHeavisideTheta[r-#]&,dm,{2}]*dm]] /;SquareMatrixQ[dm]
 
 
 (* ::Subsubsection::Closed:: *)
@@ -409,10 +455,10 @@ RQAEstimateDimensionality[ts_,\[Tau]_,opts:OptionsPattern[]]:=Module[
 (*private halpers*)
 
 
-shape[rm_]:=First[Dimensions[rm]]
+size[rm_]:=First[Dimensions[rm]]
 
 
-nMax[rm_]:=(shape[rm](shape[rm]-1)/2)
+upperTriangularMax[rm_]:=(size[rm](size[rm]-1)/2)
 
 
 runLength[list_]:={First[#],Length[#]}&/@Split[list]
@@ -427,17 +473,11 @@ segmentLengths[m_,tLen_:2]:=Module[{rl,selFun,n},
 verticalSegments[rm_]:= Transpose[UpperTriangularize[rm,1]]/;SquareMatrixQ[rm]
 
 
-verticalSegments[rm_]:= Transpose[UpperTriangularize[rm]]/;SquareMatrixQ[rm]
-
-
-diagonalSegments[rm_]:= Diagonal[UpperTriangularize[rm,1],#]&/@Range[1,shape[rm]-1] /;SquareMatrixQ[rm]
-
-
-diagonalSegments[rm_]:= Diagonal[UpperTriangularize[rm],#]&/@Range[1,shape[rm]] /;SquareMatrixQ[rm]
+diagonalSegments[rm_]:= Diagonal[UpperTriangularize[rm,1],#]&/@Range[1,size[rm]-1] /;SquareMatrixQ[rm]
 
 
 (* ::Text:: *)
-(*public stuffs*)
+(*public stuff - these are questionable.*)
 
 
 RQAVerticalLineLengths[rm_,thresh_:2]:=
@@ -470,12 +510,14 @@ RQANRecurrentPoints[rm_,thresh_:2]:=RQANVerticalRecurrentPoints[rm,thresh]+RQAND
 (*Main estimators*)
 
 
-(* ::Text:: *)
-(*This has changed. To get it back to how it worked before, set thresh = 1 instead of 2.*)
+(* ::Code:: *)
+(*RQARecurrence[rm_,thresh_:2]:=*)
+(*	(RQANRecurrentPoints[rm,thresh]/upperTriangularMax[rm]) /; SquareMatrixQ[rm]*)
 
 
-RQARecurrence[rm_,thresh_:2]:=
-	(RQANRecurrentPoints[rm,thresh]/nMax[rm]) /; SquareMatrixQ[rm]
+RQARecurrence[rm_SparseArray]:=Module[{nN},
+	nN=size[rm];
+	Length[rm["NonzeroValues"]]/(nN^2-nN)]/;SquareMatrixQ[rm]
 
 
 RQADeterminism[rm_,thresh_:2]:=
