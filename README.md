@@ -2,7 +2,7 @@
 
 ![logo](RQA/Documentation/icon.png)
 
-v 0.1.1
+v 0.2.0dev
 
 ***
 

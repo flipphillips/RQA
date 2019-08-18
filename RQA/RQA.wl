@@ -8,7 +8,7 @@
 (* :Context: RQA` *)
 (* :Author: Flip Phillips *)
 (* :Summary: This package provides various things and stuff to Mathematica. *)
-(* :Package Version: 0.1.1 *)
+(* :Package Version: 0.2 *)
 (* :Mathematica Version: 10.0+ *)
 (* :Copyright: Copyright 1988-2019, Flip Phillips, All Rights Reserved.  *)
 (* :History: *)
@@ -29,22 +29,25 @@ BeginPackage["RQA`"]
 
 
 Unprotect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,RQANeighbors,RQANearestNeighbors,RQANeighborDistances,RQAEstimateDimensionality,RQAEstimateLag,
-	RQARecurrence,RQADeterminism,RQALaminarity,RQATrappingTime,RQATrend,RQAEntropy,RQAChaos,
-	RQAMakeTimeSeries,RQATimeSeriesEpochs}]
+	RQARecurrence,RQADeterminism,RQALaminarity,RQATrappingTime,RQATrend,RQAEntropy,RQADmax,RQAChaos,RQAVmax,
+	RQAMakeTimeSeries,RQATimeSeriesEpochs,              
+	RQAVerticalLineLengths,RQADiagonalLineLengths,
+	RQANLines,RQANRecurrentPoints,RQANVerticalLines,RQANDiagonalLines,
+	RQANVerticalRecurrentPoints,RQANDiagonalRecurrentPoints}]
 
 
 (* ::Subsection:: *)
 (*Usage Messages*)
 
 
-(* ::Text:: *)
+(* ::Subsubsection::Closed:: *)
 (*Package*)
 
 
 RQA::usage="RQA is a package which provides a suite of basic Recurrance Quantification Analysis functions to Mathematica."
 
 
-(* ::Text:: *)
+(* ::Subsubsection::Closed:: *)
 (*Building the map and embeddings*)
 
 
@@ -75,11 +78,33 @@ RQAEstimateDimensionality::usage="RQAEstimateDimensionality[ts,tau] estimates th
 RQAEstimateLag::usage="RQAEstimateLag[ts] estimates an appropriate lag / tau for a given time series using the decorrelation method."
 
 
-(* ::Text:: *)
+(* ::Subsubsection:: *)
+(*Structure helpers*)
+
+
+RQAVerticalLineLengths::usage="RQAVerticalLineLengths[rm,tau] "
+
+
+RQADiagonalLineLengths::usage="RQADiagonalLineLengths[rm,tau] "
+
+
+RQANLines::usage="RQANLines[rm,tau] "
+
+
+RQANRecurrentPoints::usage="RQANRecurrentPoints[rm,tau] "
+
+
+RQANVerticalRecurrentPoints::usage="RQANVerticalRecurrentPoints[rm,tau] "
+
+
+RQANDiagonalRecurrentPoints::usage="RQANDiagonalRecurrentPoints[rm,tau] "
+
+
+(* ::Subsubsection::Closed:: *)
 (*Estimating the parameters*)
 
 
-RQARecurrence::usage="RQAEstimateLag[rm] calculates the recurrence for map rm."
+RQARecurrence::usage="RQARecurrence[rm] calculates the recurrence for map rm."
 
 
 RQADeterminism::usage="RQADeterminism[rm,l:2] calculates the determinism for map rm. Optionally accepts a minimum length run, defaults to 2."
@@ -124,12 +149,7 @@ Begin["`Private`"]
 
 
 (* ::Subsection:: *)
-(*Unprotect any functions for which rules will be defined*)
-
-
-Unprotect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,RQANeighbors,RQANearestNeighbors,RQANeighborDistances,RQAEstimateDimensionality,RQAEstimateLag,
-	RQARecurrence,RQADeterminism,RQALaminarity,RQATrappingTime,RQATrend,RQAEntropy,RQADmax,RQAChaos,RQAVmax,
-	RQAMakeTimeSeries,RQATimeSeriesEpochs}]
+(*Unprotect any system functions for which rules will be defined*)
 
 
 (* ::Subsection:: *)
@@ -144,7 +164,7 @@ Unprotect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,RQANeighbors,RQANearestNeigh
 (*Definition of the exported functions*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Utility functions*)
 
 
@@ -222,7 +242,7 @@ RQADistanceMap[ts_,OptionsPattern[]]:=Module[{df,rescale,map,rf},
 (*Create the RM using a simple, automatic threshold. Again, I should be more clever about this.*)
 
 
-Options[RQARecurrenceMap]={DistanceFunction->SquaredEuclideanDistance,"Rescale"->False}
+Options[RQARecurrenceMap]={DistanceFunction->SquaredEuclideanDistance,"Rescale"->False,"RescaleFunction"->Automatic}
 
 
 RQARecurrenceMap[ts_,radius_:Automatic,opts:OptionsPattern[]]:=Module[{dm,r},
@@ -231,7 +251,7 @@ RQARecurrenceMap[ts_,radius_:Automatic,opts:OptionsPattern[]]:=Module[{dm,r},
 	Map[HeavisideTheta[r-#]&,dm,{2}]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Parameter estimation - \[Tau]*)
 
 
@@ -246,7 +266,7 @@ RQAEstimateLag[ts_,\[Tau]max_:Automatic]:=Module[{f,dt,smax,sols,t},
 	dt*t/.Quiet[FindRoot[f[t],{t,2,1,smax}]]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Parameter estimation - dimensionality*)
 
 
@@ -382,16 +402,17 @@ RQAEstimateDimensionality[ts_,\[Tau]_,opts:OptionsPattern[]]:=Module[
 
 
 (* ::Subsubsection:: *)
-(*Metrics*)
+(*Metric Helpers*)
 
 
-RQARecurrence[rm_]:=Module[{ut,w,nMax,nRP},
-	ut=UpperTriangularize[rm,1];
-	w=First[Dimensions[rm]];
-	nMax=(w (w-1)/2);
-	nRP=Total[Flatten[ut]];
-	nRP/nMax
-]/;SquareMatrixQ[rm]
+(* ::Text:: *)
+(*private halpers*)
+
+
+shape[rm_]:=First[Dimensions[rm]]
+
+
+nMax[rm_]:=(shape[rm](shape[rm]-1)/2)
 
 
 runLength[list_]:={First[#],Length[#]}&/@Split[list]
@@ -403,40 +424,74 @@ segmentLengths[m_,tLen_:2]:=Module[{rl,selFun,n},
 	(selFun/@rl)/.{{}->{0},{1,n_}->n}]
 
 
-RQADeterminism[rm_,thresh_:2]:=Module[{ut,w,diags,segLens,lens,nRP},
-	ut=UpperTriangularize[rm,1];
-	w=First[Dimensions[rm]];
-
-	diags=Diagonal[ut,#]&/@Range[1,w-1];
-	segLens=segmentLengths[diags,thresh];
-	lens=Total/@segLens;
-	nRP=Total[Flatten[ut]];
-	Total[lens]/nRP
-]/;SquareMatrixQ[rm]
+verticalSegments[rm_]:= Transpose[UpperTriangularize[rm,1]]/;SquareMatrixQ[rm]
 
 
-RQALaminarity[rm_,thresh_:2]:=Module[{ut,verts,segLens,lens,nRP},
-	ut=UpperTriangularize[rm,1];
-
-	verts=Transpose[ut];
-	segLens=segmentLengths[verts,thresh];
-	lens=Total/@segLens;
-	nRP=Total[Flatten[ut]];
-	Total[lens]/nRP
-]/;SquareMatrixQ[rm]
+verticalSegments[rm_]:= Transpose[UpperTriangularize[rm]]/;SquareMatrixQ[rm]
 
 
-RQATrappingTime[rm_,thresh_:2]:=Module[{ut,verts,segLens,lens,nRP},
-	ut=UpperTriangularize[rm,1];
+diagonalSegments[rm_]:= Diagonal[UpperTriangularize[rm,1],#]&/@Range[1,shape[rm]-1] /;SquareMatrixQ[rm]
 
-	verts=Transpose[ut];
-	segLens=Select[Flatten[segmentLengths[verts,thresh]],#>=thresh&];
-	Mean[segLens]
-]/;SquareMatrixQ[rm]
+
+diagonalSegments[rm_]:= Diagonal[UpperTriangularize[rm],#]&/@Range[1,shape[rm]] /;SquareMatrixQ[rm]
 
 
 (* ::Text:: *)
-(*I have resisted the 'percentage' stuff above, mainly because I don't really like thinking that way, but- this one I have done the gain/percentage thing because the stability is only really a thing when it is \[PlusMinus]5 units, according to their paper. Plus, the arbitrary rescaling is already done w/ the '1000' so why not go all the way to 100,000?*)
+(*public stuffs*)
+
+
+RQAVerticalLineLengths[rm_,thresh_:2]:=
+	Select[Flatten[segmentLengths[verticalSegments[rm],thresh]],#>0&] /; SquareMatrixQ[rm]
+
+
+RQADiagonalLineLengths[rm_,thresh_:2]:=
+	Select[Flatten[segmentLengths[diagonalSegments[rm],thresh]],#>0&] /; SquareMatrixQ[rm]
+
+
+RQANVerticalLines[rm_,thresh_:2]:=Length[RQAVerticalLineLengths[rm,thresh]]
+
+
+RQANDiagonalLines[rm_,thresh_:2]:=Length[RQADiagonalLineLengths[rm,thresh]]
+
+
+RQANLines[rm_,thresh_:2]:=RQANVerticalLines[rm,thresh]+RQANDiagonalLines[rm,thresh]
+
+
+RQANVerticalRecurrentPoints[rm_,thresh_:2]:=Total[RQAVerticalLineLengths[rm,thresh]]
+
+
+RQANDiagonalRecurrentPoints[rm_,thresh_:2]:=Total[RQADiagonalLineLengths[rm,thresh]]
+
+
+RQANRecurrentPoints[rm_,thresh_:2]:=RQANVerticalRecurrentPoints[rm,thresh]+RQANDiagonalRecurrentPoints[rm,thresh]
+
+
+(* ::Subsubsection:: *)
+(*Main estimators*)
+
+
+(* ::Text:: *)
+(*This has changed. To get it back to how it worked before, set thresh = 1 instead of 2.*)
+
+
+RQARecurrence[rm_,thresh_:2]:=
+	(RQANRecurrentPoints[rm,thresh]/nMax[rm]) /; SquareMatrixQ[rm]
+
+
+RQADeterminism[rm_,thresh_:2]:=
+	(RQANDiagonalRecurrentPoints[rm,thresh]/RQANRecurrentPoints[rm,thresh]) /; SquareMatrixQ[rm]
+
+
+RQALaminarity[rm_,thresh_:2]:=
+	(RQANVerticalRecurrentPoints[rm,thresh]/RQANRecurrentPoints[rm,thresh]) /; SquareMatrixQ[rm]
+
+
+RQATrappingTime[rm_,thresh_:2]:=
+	(Mean[RQAVerticalLineLengths[rm,thresh]]) /; SquareMatrixQ[rm]
+
+
+(* ::Text:: *)
+(*This is broken*)
 
 
 RQATrend[rm_]:=Module[{ut,w,d,lm,x},
@@ -452,41 +507,26 @@ RQATrend[rm_]:=Module[{ut,w,d,lm,x},
 ]/;SquareMatrixQ[rm]
 
 
-RQAEntropy[rm_,thresh_:2]:=Module[{ut,w,diags,segLens,lens,nRP},
-	ut=UpperTriangularize[rm,1];
-	w=First[Dimensions[rm]];
-
-	diags=Diagonal[ut,#]&/@Range[1,w-1];
-	segLens=Select[Flatten[segmentLengths[diags,thresh]],#>0&];
-	Entropy[2,segLens]
-	]/;SquareMatrixQ[rm]
+RQAEntropy[rm_,thresh_:2]:=
+	(Entropy[2,RQADiagonalLineLengths[rm,thresh]]) /; SquareMatrixQ[rm]
 
 
-RQAChaos[rm_,thresh_:2]:=Module[{ut,w,diags,segLens,lens,nRP},
-	ut=UpperTriangularize[rm,1];
-	w=First[Dimensions[rm]];
-
-	diags=Diagonal[ut,#]&/@Range[1,w-1];
-	segLens=Select[Flatten[segmentLengths[diags,thresh]],#>0&];
-	1/Max[segLens]
-]/;SquareMatrixQ[rm]
+RQAChaos[rm_,thresh_:2]:=
+	(1/Max[RQADiagonalLineLengths[rm,thresh]]) /; SquareMatrixQ[rm]
 
 
-RQADmax[rm_,thresh_:2]:=Module[{ut,w,diags,segLens,lens,nRP},ut=UpperTriangularize[rm,1];
-	w=First[Dimensions[rm]];
-	diags=Diagonal[ut,#]&/@Range[1,w-1];
-	segLens=segmentLengths[diags,thresh];
-	lens=Total/@segLens;
-	Max[segLens]
-	]/;SquareMatrixQ[rm]
+(* ::Text:: *)
+(*Diagonal max*)
 
 
-RQAVmax[rm_,thresh_:2]:=Module[{ut,verts,segLens,lens,nRP},ut=UpperTriangularize[rm,1];
-	verts=Transpose[ut];
-	segLens=segmentLengths[verts,thresh];
-	lens=Total/@segLens;
-	Max[segLens]
-]/;SquareMatrixQ[rm]
+RQADmax[rm_,thresh_:2]:= Max[RQADiagonalLineLengths[rm,thresh]] /; SquareMatrixQ[rm]
+
+
+(* ::Text:: *)
+(*Vertical max*)
+
+
+RQAVmax[rm_,thresh_:2]:= Max[RQAVerticalLineLengths[rm,thresh]] /; SquareMatrixQ[rm]
 
 
 (* ::Subsection:: *)
@@ -510,7 +550,10 @@ End[]
 
 Protect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,RQANeighbors,RQANearestNeighbors,RQANeighborDistances,RQAEstimateDimensionality,RQAEstimateLag,
 	RQARecurrence,RQADeterminism,RQALaminarity,RQATrappingTime,RQATrend,RQAEntropy,RQADmax,RQAChaos,RQAVmax,
-	RQAMakeTimeSeries,RQATimeSeriesEpochs}]
+	RQAMakeTimeSeries,RQATimeSeriesEpochs,
+	RQAVerticalLineLengths,RQADiagonalLineLengths,
+	RQANLines,RQANRecurrentPoints,RQANVerticalLines,RQANDiagonalLines,
+	RQANVerticalRecurrentPoints,RQANDiagonalRecurrentPoints}]
 
 
 (* ::Subsection:: *)

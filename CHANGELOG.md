@@ -22,7 +22,8 @@
 - `DimensionalityEstimation` works but with old 'false neighbor' threshold.
 - Moved `icon.png` to `Documentation` tree
 - Redesigned `EstimateDimensionality` a little to handle errors better. Still not happy with it.
-  
+- Significant refactoring of parameter estimation code based on new functions added for fundamental computations.
+
 ### Added
 
 - `EmbeddedLastTime` gives last moment in an embedded TS.
@@ -31,6 +32,15 @@
 - Warning message for irregular sampling
 - Documentation path
 - Some usage messages
+- Data from RQA151 added to `Development` for debugging
+- `HX` generated from RQC.EXE
+- `RQA Comparison.nb` attempting to rectify differences between Webber's approach and mine.
+- `VerticalLengths`, `DiagonalLengths`, etc added since they act as foundations for computations.
+- Helpers for array shape, line and point finders.
+
+### Removed
+
+- Unnecessary `Unprotect`
 
 ***
 
