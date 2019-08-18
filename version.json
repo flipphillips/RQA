@@ -1,6 +1,6 @@
 {
   "name": "RQA",
-  "prerelease": true,
+  "prerelease": falst,
   "major_version": 0,
   "minor_version": 2,
   "revision_number": 0,

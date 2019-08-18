@@ -17,6 +17,8 @@
 
 ## [Unreleased changes]
 
+## [0.2.0] - 2019-08-18
+
 ### Changed
 
 - `DimensionalityEstimation` works but with old 'false neighbor' threshold.
