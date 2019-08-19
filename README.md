@@ -31,7 +31,9 @@ The nice thing about this method is that, when you update/pull fresh versions of
 
 ## Repository Notebook Viewer
 
-[![View notebooks](https://wolfr.am/Etv7EZ90)](https://wolfr.am/FFDrp9F5)
+This lets you view notebooks in this package using the WolframCloud
+
+- dev branch [![View notebooks](https://wolfr.am/Etv7EZ90)](https://wolfr.am/FFDrp9F5)
 
 ## Documentation
 
@@ -49,7 +51,7 @@ The most recent work is based on the book recently published by Webber et al. As
 
 ## People
 
-[flipphillips.com][https://flipphillips.com]
+<https://flipphillips.com>
 
 ## References
 
