@@ -23,9 +23,21 @@ A major revision that uses the definitions from the Webber book, sparse arrays, 
 
 - `README.md` has installation instructions.
 - `README.md` has documentation png.
-- Two versions of `RecurrenceMap` that take either a distance map or timeseries and return a continuous RM instead of a binary one.
 - Routines refactored again for parameter estimation.
+- `RQARecurrence` has two versions - one that operates on the whole system and another with RR_star that operates on a single diagonal.
+- Helpers renamed / beginning of refactor for upper-triangular vs whole-array calculations
+- Symmetric options (see above)
+- `dmin` / segment-length threshold moved to an option rather than a positional parameter
+- `LOI` option added to `xxxMap` routines
+- **Important** `RQARecurrenceMap` now can take _either_ a timeseries _or_ an already-computed distance map.
+- **Important** `RQARecurrenceMap` returns a `SparseArray` of distances rather than binary 0/1
 
+### Added
+- `RQARemoveLOI`
+- `RQARatio`
+- `RQADApply`
+- `RQADmean`
+- 
 ## [0.2.0] - 2019-08-18
 
 Released up-to-date version with changed documentation and calculation methods.
