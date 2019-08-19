@@ -14,7 +14,7 @@ Note that I posted an early version of this to GitHub for sharing with the 2019 
 
 ## Installation
 
-This package uses a subset of the Paclet mechanism but can be installed manually as a subdirectory to the 
+This package uses a subset of the Paclet mechanism but can be installed manually as a subdirectory to the
 
 ```mathematica
 FileNameJoin[{$UserBaseDirectory, "Applications"}]
@@ -33,11 +33,12 @@ The nice thing about this method is that, when you update/pull fresh versions of
 
 This lets you view notebooks in this package using the WolframCloud
 
-- dev branch [![View notebooks](https://wolfr.am/Etv7EZ90)](https://wolfr.am/FFDrp9F5)
+* [![View notebooks](https://wolfr.am/Etv7EZ90)](https://wolfr.am/FVNv9Yfe) - master branch
+* [![View notebooks](https://wolfr.am/Etv7EZ90)](https://wolfr.am/FFDrp9F5) - dev branch
 
 ## Documentation
 
-![dochowto](RQA/Documentation/dochowto.png)
+![Documentation how-to](RQA/Documentation/dochowto.png)
 
 ## Version History
 

@@ -33,11 +33,14 @@ A major revision that uses the definitions from the Webber book, sparse arrays, 
 - **Important** `RQARecurrenceMap` returns a `SparseArray` of distances rather than binary 0/1
 
 ### Added
+
 - `RQARemoveLOI`
 - `RQARatio`
 - `RQADApply`
 - `RQADmean`
-- 
+
+***
+
 ## [0.2.0] - 2019-08-18
 
 Released up-to-date version with changed documentation and calculation methods.
