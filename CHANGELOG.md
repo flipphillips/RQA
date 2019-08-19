@@ -17,6 +17,10 @@
 
 ## [Unreleased changes]
 
+## [0.2.1] - 2019-08-19
+
+- Minor `README` change
+
 ## [0.2.0] - 2019-08-18
 
 ### Changed
