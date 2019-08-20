@@ -31,14 +31,15 @@
 (*Set up the package context, including any imports*)
 
 
-BeginPackage["RQA`"]
+BeginPackage["RQA`"];
 
 
 (* ::Subsection:: *)
 (*Unprotect exported symbols*)
 
 
-Unprotect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,RQARemoveLOI,
+Unprotect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,
+	RQARemoveLOI,RQANonzeroValues,
 	RQANeighbors,RQANearestNeighbors,RQANeighborDistances,RQAEstimateDimensionality,RQAEstimateLag,
 	RQARecurrence,
 	RQADeterminism,RQARatio,RQALaminarity,RQATrappingTime,
@@ -47,7 +48,7 @@ Unprotect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,RQARemoveLOI,
 	RQAMakeTimeSeries,RQATimeSeriesEpochs,              
 	RQAVerticalLineLengths,RQADiagonalLineLengths,
 	RQANLines,RQANRecurrentPoints,RQANVerticalLines,RQANDiagonalLines,
-	RQANVerticalRecurrentPoints,RQANDiagonalRecurrentPoints}]
+	RQANVerticalRecurrentPoints,RQANDiagonalRecurrentPoints}];
 
 
 (* ::Subsection:: *)
@@ -58,97 +59,100 @@ Unprotect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,RQARemoveLOI,
 (*Package*)
 
 
-RQA::usage="RQA is a package which provides a suite of basic Recurrance Quantification Analysis functions to Mathematica."
+RQA::usage="RQA is a package which provides a suite of basic Recurrance Quantification Analysis functions to Mathematica.";
 
 
 (* ::Subsubsection::Closed:: *)
 (*Building the map and embeddings*)
 
 
-RQARemoveLOI::usage="RQARemoveLOI[rm] removes the LOI from the recurrence map."
+RQARemoveLOI::usage="RQARemoveLOI[rm] removes the LOI from the recurrence map.";
 
 
-RQAEmbeddedLastTime::usage="RQAEmbeddedLastTime[ts,d,tau] returns the last valid time for an embedding in dimension d for lag tau."
+RQAEmbeddedLastTime::usage="RQAEmbeddedLastTime[ts,d,tau] returns the last valid time for an embedding in dimension d for lag tau.";
 
 
-RQAEmbed::usage="RQAEmbed[ts,d,tau] embeds time series ts into d dimensions with a lag of tau."
+RQAEmbed::usage="RQAEmbed[ts,d,tau] embeds time series ts into d dimensions with a lag of tau.";
 
 
-RQADistanceMap::usage="RQADistanceMap[ts] computes a distance map of all samples to all other samples in time series ts. Note that ts is assumed to be regularly sampled."
+RQADistanceMap::usage="RQADistanceMap[ts] computes a distance map of all samples to all other samples in time series ts. Note that ts is assumed to be regularly sampled.";
 
 
-RQARecurrenceMap::usage="RQARecurrenceMap[ts,r] computes a recurrence map from ts, using a recurrence raduis r."
+RQARecurrenceMap::usage="RQARecurrenceMap[ts,r] computes a recurrence map from ts, using a recurrence raduis r.";
 
 
-RQANeighbors::usage="RQANeighbors[ts] computes a neighborhood for each sample in ts. Number of neighbors and distance functions are available as options."
+RQANeighbors::usage="RQANeighbors[ts] computes a neighborhood for each sample in ts. Number of neighbors and distance functions are available as options.";
 
 
-RQANearestNeighbors::usage="RQANearestNeighbors[ts] computes a singular nearest neighbor for each value in ts."
+RQANearestNeighbors::usage="RQANearestNeighbors[ts] computes a singular nearest neighbor for each value in ts.";
 
 
-RQANeighborDistances::usage="RQANeighborDistances[ts] computes the distance to each nearest neighbor for each value in ts."
+RQANeighborDistances::usage="RQANeighborDistances[ts] computes the distance to each nearest neighbor for each value in ts.";
 
 
-RQAEstimateDimensionality::usage="RQAEstimateDimensionality[ts,tau] estimates the proper embedding dimension for a given lag tau using the false-neighbor algorithm."
+RQAEstimateDimensionality::usage="RQAEstimateDimensionality[ts,tau] estimates the proper embedding dimension for a given lag tau using the false-neighbor algorithm.";
 
 
-RQAEstimateLag::usage="RQAEstimateLag[ts] estimates an appropriate lag / tau for a given time series using the decorrelation method."
+RQAEstimateLag::usage="RQAEstimateLag[ts] estimates an appropriate lag / tau for a given time series using the decorrelation method.";
+
+
+RQANonzeroValues::usage="RQANonzeroValues[map] returns non-zero elements of map.";
 
 
 (* ::Subsubsection:: *)
 (*Structure helpers*)
 
 
-RQAVerticalLineLengths::usage="RQAVerticalLineLengths[rm,tau] "
+RQAVerticalLineLengths::usage="RQAVerticalLineLengths[rm,tau] ";
 
 
-RQADiagonalLineLengths::usage="RQADiagonalLineLengths[rm] "
+RQADiagonalLineLengths::usage="RQADiagonalLineLengths[rm] ";
 
 
-RQANLines::usage="RQANLines[rm,tau] "
+RQANLines::usage="RQANLines[rm,tau] ";
 
 
-RQANRecurrentPoints::usage="RQANRecurrentPoints[rm,tau] "
+RQANRecurrentPoints::usage="RQANRecurrentPoints[rm,tau] ";
 
 
-RQANVerticalRecurrentPoints::usage="RQANVerticalRecurrentPoints[rm,tau] "
+RQANVerticalRecurrentPoints::usage="RQANVerticalRecurrentPoints[rm,tau] ";
 
 
-RQANDiagonalRecurrentPoints::usage="RQANDiagonalRecurrentPoints[rm] "
+RQANDiagonalRecurrentPoints::usage="RQANDiagonalRecurrentPoints[rm] ";
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Estimating the parameters*)
 
 
-RQARecurrence::usage="RQARecurrence[rm] calculates the recurrence for map rm. RQARecurrence[rm,k] calculates the recurrence for map rm on diagonal k away from the LOI."
+RQARecurrence::usage="RQARecurrence[rm] calculates the recurrence for map rm. RQARecurrence[rm,k] calculates the recurrence for map rm on diagonal k away from the LOI.";
 
 
-RQADeterminism::usage="RQADeterminism[rm,l:2] calculates the determinism for map rm. Optionally accepts a minimum length run, defaults to 2."
+RQADeterminism::usage="RQADeterminism[rm,l:2] calculates the determinism for map rm. Optionally accepts a minimum length run, defaults to 2.";
 
 
-RQARatio::usage="RQARatio[rm,l:2] calculates the RATIO for map rm. Optionally accepts a minimum length run, defaults to 2."
+RQARatio::usage="RQARatio[rm,l:2] calculates the RATIO for map rm. Optionally accepts a minimum length run, defaults to 2.";
 
 
-RQALaminarity::usage="RQALaminarity[rm,l:2] calculates the laminarity for map rm. Optionally accepts a minimum length run, defaults to 2."
+RQALaminarity::usage="RQALaminarity[rm,l:2] calculates the laminarity for map rm. Optionally accepts a minimum length run, defaults to 2.";
 
 
-RQATrappingTime::usage="RQATrappingTime[rm,l:2] calculates the trapping time for map rm. Optionally accepts a minimum length run, defaults to 2."
+RQATrappingTime::usage="RQATrappingTime[rm,l:2] calculates the trapping time for map rm. Optionally accepts a minimum length run, defaults to 2.";
 
 
-RQATrend::usage="RQATrend[rm] calculates the trend for map rm."
+RQATrend::usage="RQATrend[rm] calculates the trend for map rm.";
 
 
-RQAEntropy::usage="RQAEntropy[rm] calculates entropy for map rm. Optionally accepts a minimum length run, defaults to 2."
+RQAEntropy::usage="RQAEntropy[rm] calculates entropy for map rm. Optionally accepts a minimum length run, defaults to 2.";
 
 
-RQAChaos::usage="RQAChaos[rm] calculates chaos for map rm. Optionally accepts a minimum length run, defaults to 2."
+RQAChaos::usage="RQAChaos[rm] calculates chaos for map rm. Optionally accepts a minimum length run, defaults to 2.";
 
 
-RQADApply::usage="RQADApply[f,rm,l:2] applies f to the diagonal segment lengths"
+RQADApply::usage="RQADApply[f,rm,l:2] applies f to the diagonal segment lengths";
 
 
-RQADmax::usage="RQADmax[rm] calculates Dmax for map rm. Optionally accepts a minimum length run, defaults to 2."
+RQADmax::usage="RQADmax[rm] calculates Dmax for map rm. Optionally accepts a minimum length run, defaults to 2.";
 
 
 RQADmean::usage="RQADmean[rm,l:2] calculates the average length of diagonal segments."
@@ -161,17 +165,17 @@ RQAVmax::usage="RQAVmax[rm] calculates Vmax for map rm. Optionally accepts a min
 (*Utility Functions*)
 
 
-RQAMakeTimeSeries::usage="RQAMakeTimeSeries[data,dt,t0] creates a regularly sampled time series from data, using dt as a time-step and, optionally t0 for starting time."
+RQAMakeTimeSeries::usage="RQAMakeTimeSeries[data,dt,t0] creates a regularly sampled time series from data, using dt as a time-step and, optionally t0 for starting time.";
 
 
-RQATimeSeriesEpochs::usage="RQATimeSeriesEpochs[ts,wid,overlap] creates a list of time series of a given width and overlap."
+RQATimeSeriesEpochs::usage="RQATimeSeriesEpochs[ts,wid,overlap] creates a list of time series of a given width and overlap.";
 
 
 (* ::Subsection::Closed:: *)
 (*Begin the private context*)
 
 
-Begin["`Private`"]
+Begin["`Private`"];
 
 
 (* ::Subsection:: *)
@@ -195,7 +199,7 @@ nNoLOI[rm_]:=(nN[rm]^2-nN[rm])
 nUpperTriangular[rm_]:=(nN[rm](nN[rm]-1)/2)
 
 
-Options[scaleFactor]={"Symmetric"->True}
+Options[scaleFactor]={"Symmetric"->True};
 
 
 scaleFactor[rm_,opts:OptionsPattern[]]:=If[OptionValue["Symmetric"],nUpperTriangular,nNoLOI][rm]
@@ -214,6 +218,17 @@ scaleFactor[rm_,opts:OptionsPattern[]]:=If[OptionValue["Symmetric"],nUpperTriang
 
 
 (* ::Subsubsection::Closed:: *)
+(*The threshold function - what is a point?*)
+
+
+(* ::Text:: *)
+(*The threshold function is # > 0 & - could generalize, looks like my other thing uses !PossibleZeroQ[x]*)
+
+
+occupied[x_]:=!PossibleZeroQ[x]
+
+
+(* ::Subsubsection::Closed:: *)
 (*TimeSeries functions*)
 
 
@@ -228,7 +243,7 @@ RQATimeSeriesEpochs[ts_,wid_,overlap_]:=
   Table[TimeSeriesWindow[ts,{t0,t0+wid}],{t0,ts["FirstTime"],ts["LastTime"]-wid,wid-overlap}]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Embedding*)
 
 
@@ -264,7 +279,7 @@ RQAEmbed[ts_,d_,\[Tau]_,OptionsPattern[]]:=Module[{vals,validts,truncTime},
 	TimeSeries[TemporalData[vals],ResamplingMethod->OptionValue[ResamplingMethod]]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Map generation*)
 
 
@@ -272,7 +287,7 @@ RQAEmbed[ts_,d_,\[Tau]_,OptionsPattern[]]:=Module[{vals,validts,truncTime},
 (*HeavisideTheta doesn't give 0 at approximate-0 (0., on purpose) so this fixes that-*)
 
 
-brutalHeavisideTheta[x_]:=0/;PossibleZeroQ[x]
+brutalHeavisideTheta[x_]:=0/;!occupied[x]
 brutalHeavisideTheta[x_]:=HeavisideTheta[x]
 
 
@@ -311,7 +326,7 @@ Options[RQARecurrenceMap]={
 	DistanceFunction->SquaredEuclideanDistance,
 	"Rescale"->False,
 	"RescaleFunction"->Automatic,
-	"LOI"->False}
+	"LOI"->False,"Binary"->False};
 
 
 (* ::Text:: *)
@@ -327,6 +342,12 @@ RQARecurrenceMap[dm_,radius_:Automatic,opts:OptionsPattern[]]:=Module[{r,sa},
 
 RQARecurrenceMap[ts_TemporalData,radius_:Automatic,opts:OptionsPattern[]]:=
 	RQARecurrenceMap[RQADistanceMap[ts,opts],radius,opts]
+
+
+RQANonzeroValues[map_SparseArray]:=map["NonzeroValues"]
+
+
+RQANonzeroValues[map_]:=Select[Flatten[map],occupied]
 
 
 (* ::Subsubsection::Closed:: *)
@@ -491,13 +512,17 @@ RQAEstimateDimensionality[ts_,\[Tau]_,opts:OptionsPattern[]]:=Module[
 (*Segment counters - these don't care about triangularity*)
 
 
-runLength[list_]:={First[#],Length[#]}&/@Split[Map[#>0&,list]]
+runLength[list_]:={First[#],Length[#]}&/@Split[Map[occupied,list]]
 
 
-takeRuns[l_,tLen_]:=Select[If[#[[1]]\[And]#[[2]]>=tLen,#[[2]],0]&/@l,#>0&]
+takeRuns[l_,tLen_]:=Select[If[#[[1]]\[And]#[[2]]>=tLen,#[[2]],0]&/@l,occupied]
 
 
-segmentLengths[m_,tLen_]:=
+segmentLengths[l_,tLen_]:=
+	takeRuns[runLength[Normal[l]],tLen]
+
+
+matrixSegmentLengths[m_,tLen_]:=
 	(takeRuns[#,tLen]&/@(runLength/@Normal[m]))
 
 
@@ -506,6 +531,10 @@ segmentLengths[m_,tLen_]:=
 
 
 RQARemoveLOI[rm_]:=(1-IdentityMatrix[nN[rm]])rm
+
+
+(* ::Code:: *)
+(*ResourceFunction["ZeroDiagonal"][matrix]*)
 
 
 (* ::Text:: *)
@@ -524,7 +553,7 @@ verticalSegments[rm_,opts:OptionsPattern[]]:= Transpose[rm]
 Options[RQAVerticalLineLengths]=Join[Options[verticalSegments],{"Vmin"->2}];
 
 RQAVerticalLineLengths[rm_,opts:OptionsPattern[]]:=
-	Flatten[segmentLengths[verticalSegments[rm,opts],OptionValue["Vmin"]]]
+	Flatten[matrixSegmentLengths[verticalSegments[rm,opts],OptionValue["Vmin"]]]
 
 
 Options[RQANVerticalLines]= Options[RQAVerticalLineLengths];
@@ -554,7 +583,10 @@ diagonalSegments[rm_,opts:OptionsPattern[]]:=
 Options[RQADiagonalLineLengths]=Join[Options[diagonalSegments],{"Dmin"->2}];
 
 RQADiagonalLineLengths[rm_,opts:OptionsPattern[]]:=
-	Flatten[segmentLengths[diagonalSegments[rm,opts],OptionValue["Dmin"]]]
+	Flatten[matrixSegmentLengths[diagonalSegments[rm,opts],OptionValue["Dmin"]]]
+	
+RQADiagonalLineLengths[rm_,k_,opts:OptionsPattern[]]:=
+	segmentLengths[Diagonal[rm,k],OptionValue["Dmin"]]
 
 
 Options[RQANDiagonalLines]=Options[RQADiagonalLineLengths];
@@ -568,13 +600,12 @@ RQANDiagonalRecurrentPoints[rm_,opts:OptionsPattern[]]:=Total[RQADiagonalLineLen
 
 
 (* ::Text:: *)
-(*Total Number of Points*)
+(*Total Number of Points - whole array and diagonal based.*)
 
 
 RQANRecurrentPoints[rm_SparseArray]:=Length[rm["NonzeroValues"]]
 
-
-RQANRecurrentPoints[rm_]:=Count[rm,x_/;!PossibleZeroQ[x],{2}]
+RQANRecurrentPoints[rm_]:=Count[rm,x_/;occupied[x],{ArrayDepth[rm]}]
 
 
 (* ::Subsubsection:: *)
@@ -585,12 +616,12 @@ RQANRecurrentPoints[rm_]:=Count[rm,x_/;!PossibleZeroQ[x],{2}]
 (*Recurrence - overall and diagonal-only (SubStar[RR]) versions*)
 
 
-RQARecurrence[rm_SparseArray]:=
+RQARecurrence[rm_SparseArray,opts:OptionsPattern[]]:=
 	RQANRecurrentPoints[rm]/nNoLOI[rm]/;SquareMatrixQ[rm]
 
 
-RQARecurrence[rm_SparseArray,k_Integer]:=(
-	Count[Normal[Diagonal[rm,k]],x_/;x!=0]/(nN[rm]-k)
+RQARecurrence[rm_SparseArray,k_Integer,opts:OptionsPattern[]]:=(
+	RQANRecurrentPoints[Diagonal[rm,k]]/(nN[rm]-k)
 )/;SquareMatrixQ[rm]
 
 
@@ -617,13 +648,17 @@ RQARatio[rm_,opts:OptionsPattern[]]:=
 (*Generalized apply function. The symmetry options will be something I need to refine.*)
 
 
-Options[RQADApply]=Join[Options[RQADiagonalLineLengths],{"Dmin"->2}]
+Options[RQADApply]=Join[Options[RQADiagonalLineLengths],{"Dmin"->2}];
 
 
-RQADApply[f_,rm_,opts:OptionsPattern[]]:=f[RQADiagonalLineLengths[rm,opts]] /; SquareMatrixQ[rm]
+(* ::Text:: *)
+(*\[Bullet] To the whole map*)
 
 
-RQADApply[f_,rm_,k_Integer,opts:OptionsPattern[]]:=f[Normal[Diagonal[rm,k]]] /; SquareMatrixQ[rm]
+RQADApply[f_,rm_,opts:OptionsPattern[]]:=f[RQADiagonalLineLengths[rm,opts]]
+
+
+RQADApply[f_,rm_,k_Integer,opts:OptionsPattern[]]:=f[RQADiagonalLineLengths[rm,k,opts]]
 
 
 (* ::Text:: *)
@@ -640,36 +675,46 @@ RQADmax[rm_,opts:OptionsPattern[]]:= RQADApply[Max,rm,opts]
 RQADmean[rm_,opts:OptionsPattern[]]:= RQADApply[Mean,rm,opts]
 
 
+RQADmean[rm_,k_,opts:OptionsPattern[]]:= RQADApply[Mean,rm,k,opts]
+
+
+(* ::Text:: *)
+(*Trend*)
+
+
+Options[RQATrend]=Join[{"NTruncate"->Automatic},Options[RQARecurrence],Options[RQADmean],Options[RQADiagonalLineLengths]];
+
+RQATrend[rm_,opts:OptionsPattern[]]:= Module[{tildeN},
+	tildeN=nN[rm]-If[OptionValue["NTruncate"]===Automatic,10,OptionValue["NTruncate"]];
+	Sum[(i-tildeN/2)(RQARecurrence[rm,i,FilterRules[{opts}, Options[RQARecurrence]]]-(RQADmean[rm,i,FilterRules[{opts}, Options[RQADmean]]]/.Mean[{}]->0)),{i,tildeN}] /
+		Sum[(i-tildeN/2)^2,{i,tildeN}]]
+
+
 (* ::Text:: *)
 (*Vertical things*)
 
 
-RQALaminarity[rm_,thresh_:2]:=
-	(RQANVerticalRecurrentPoints[rm,thresh]/RQANRecurrentPoints[rm]) /; SquareMatrixQ[rm]
+RQALaminarity[rm_,opts:OptionsPattern[]]:=
+	(RQANVerticalRecurrentPoints[rm,opts]/RQANRecurrentPoints[rm]) /; SquareMatrixQ[rm]
 
 
-RQATrappingTime[rm_,thresh_:2]:=
-	(Mean[RQAVerticalLineLengths[rm,thresh]]) /; SquareMatrixQ[rm]
+RQATrappingTime[rm_,opts:OptionsPattern[]]:=
+	(Mean[RQAVerticalLineLengths[rm,opts]]) /; SquareMatrixQ[rm]
 
 
-(* ::Code:: *)
-(*RQATrend[rm_]:=*)
-(*]/;SquareMatrixQ[rm]*)
+RQAEntropy[rm_,opts:OptionsPattern[]]:=
+	(Entropy[2,RQADiagonalLineLengths[rm,opts]]) /; SquareMatrixQ[rm]
 
 
-RQAEntropy[rm_,thresh_:2]:=
-	(Entropy[2,RQADiagonalLineLengths[rm,thresh]]) /; SquareMatrixQ[rm]
-
-
-RQAChaos[rm_,thresh_:2]:=
-	(1/Max[RQADiagonalLineLengths[rm,thresh]]) /; SquareMatrixQ[rm]
+RQAChaos[rm_,opts:OptionsPattern[]]:=
+	(1/Max[RQADiagonalLineLengths[rm,opts]]) /; SquareMatrixQ[rm]
 
 
 (* ::Text:: *)
 (*Vertical max*)
 
 
-RQAVmax[rm_,thresh_:2]:= Max[RQAVerticalLineLengths[rm,thresh]] /; SquareMatrixQ[rm]
+RQAVmax[rm_,opts:OptionsPattern[]]:= Max[RQAVerticalLineLengths[rm,opts]] /; SquareMatrixQ[rm]
 
 
 (* ::Subsection:: *)
@@ -691,7 +736,8 @@ End[]
 (*Protect exported symbols*)
 
 
-Protect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,RQARemoveLOI,
+Protect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,
+	RQARemoveLOI,RQANonzeroValues,
 	RQANeighbors,RQANearestNeighbors,RQANeighborDistances,RQAEstimateDimensionality,RQAEstimateLag,
 	RQARecurrence,
 	RQADeterminism,RQARatio,RQALaminarity,RQATrappingTime,

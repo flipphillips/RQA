@@ -31,6 +31,8 @@ A major revision that uses the definitions from the Webber book, sparse arrays, 
 - `LOI` option added to `xxxMap` routines
 - **Important** `RQARecurrenceMap` now can take _either_ a timeseries _or_ an already-computed distance map.
 - **Important** `RQARecurrenceMap` returns a `SparseArray` of distances rather than binary 0/1
+- Significant change in determining 'occupancy' of a given location in the RM.
+- semicolons after stuff that creates output in RQA.wl because I hate that.
 
 ### Added
 
@@ -38,6 +40,12 @@ A major revision that uses the definitions from the Webber book, sparse arrays, 
 - `RQARatio`
 - `RQADApply`
 - `RQADmean`
+- `RQANonzeroValues`
+- added diagonal-only computations (like RR_star) so that we could calculate other difficult-to-do things. These are `RQAXxx[rm,k,opts]`
+
+### Fixed
+
+- `RQATrend`
 
 ***
 
