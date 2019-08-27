@@ -1,16 +1,14 @@
 (* Paclet Info File *)
 
-(* created 2018/03/05*)
-
 Paclet[
     Name -> "RQA",
-    Description -> "Recurrance Quantification Package",
+    Description -> "Recurrance Quantification Analysis Package",
     Creator -> "Flip Phillips <flip@skidmore.edu>",
     Publisher -> "Skidmore Vision Lab",
-    Copyright -> "(c) 2018- Flip Phillips",
+    Copyright -> "(c) 2015- Flip Phillips",
     License -> "MIT",
-    Version -> "0.1.1",
-    BuildNumber -> "10",
+    Version -> "0.3.0",
+    BuildNumber -> "26",
     MathematicaVersion -> "10.0+",
     URL -> "https://github.com/flipphillips/RQA",
     Thumbnail -> "Documentation/icon.png",
@@ -23,7 +21,7 @@ Paclet[
 
       { "Kernel", 
         Root -> "Kernel", 
-        Context -> {"FPTools`"}
+        Context -> {"RQA`"}
       },
 
       {"FrontEnd", 

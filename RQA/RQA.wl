@@ -22,7 +22,7 @@
 
 
 (* ::Text:: *)
-(*Version 0.1 - Based on a ton of papers that were not the Webber originals, but instead the interpretative work of others. *)
+(*Version 0.1 - Based on a set of papers that were not the Webber originals, but instead the interpretative work of others. *)
 (*Version 0.2 - Based on the paper in the Dynsys NSF book.  Webber Jr, C. L., & Zbilut, J. P. (2005). Recurrence quantification analysis of nonlinear dynamical systems. Tutorials in contemporary nonlinear methods for the behavioral sciences, 94, 26-94. https://www.nsf.gov/pubs/2005/nsf05057/nmbs/chap2.pdf*)
 (*Version 0.3 - Based on Webber Jr, C. L., & Marwan, N. (2015). Recurrence quantification analysis. Theory and Best Practices. Springer.*)
 
@@ -46,9 +46,10 @@ Unprotect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,
 	RQATrend,RQAEntropy,RQAChaos,RQAVmax,
 	RQADApply,RQADmean,RQADmax,
 	RQAMakeTimeSeries,RQATimeSeriesEpochs,              
-	RQAVerticalLineLengths,RQADiagonalLineLengths,
-	RQANLines,RQANRecurrentPoints,RQANVerticalLines,RQANDiagonalLines,
-	RQANVerticalRecurrentPoints,RQANDiagonalRecurrentPoints}];
+	RQAVerticalLineLengths,RQAHorizontalLengths,RQADiagonalLineLengths,
+	RQANLines,RQANRecurrentPoints,RQANVerticalLines,RQANHorizontal,RQANDiagonalLines,
+	RQANVerticalRecurrentPoints,RQANHorizontalRecurrentPoints,RQANDiagonalRecurrentPoints,
+	$RQADebug,$RQAVersion}];
 
 
 (* ::Subsection:: *)
@@ -60,6 +61,12 @@ Unprotect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,
 
 
 RQA::usage="RQA is a package which provides a suite of basic Recurrance Quantification Analysis functions to Mathematica.";
+
+
+$RQADebug::usage="RQA package built with debugging on.";
+
+
+$RQAVersion::usage="RQA package version.";
 
 
 (* ::Subsubsection::Closed:: *)
@@ -99,7 +106,7 @@ RQAEstimateLag::usage="RQAEstimateLag[ts] estimates an appropriate lag / tau for
 RQANonzeroValues::usage="RQANonzeroValues[map] returns non-zero elements of map.";
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Structure helpers*)
 
 
@@ -171,7 +178,7 @@ RQAMakeTimeSeries::usage="RQAMakeTimeSeries[data,dt,t0] creates a regularly samp
 RQATimeSeriesEpochs::usage="RQATimeSeriesEpochs[ts,wid,overlap] creates a list of time series of a given width and overlap.";
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Begin the private context*)
 
 
@@ -180,6 +187,28 @@ Begin["`Private`"];
 
 (* ::Subsection:: *)
 (*Unprotect any system functions for which rules will be defined*)
+
+
+(* ::Subsection:: *)
+(*Load external files *)
+
+
+RQA::ix="RQA running from interactive thing";
+
+
+Module[{files,dir},
+	(* load in any session *)
+	files={"Globals.wl"};
+
+	If[$InputFileName=="",Message[RQA::ix],
+		Map[Get[FileNameJoin[{DirectoryName[$InputFileName], #}]] &, files];
+		(* only load in a notebook session *)
+		
+		If[Head[$FrontEnd] === FrontEndObject,
+			files = {};(*"Dock.wl","Notebook.wl"*)
+			Map[Get[FileNameJoin[{DirectoryName[$InputFileName], #}]] &, files];]
+	]
+];
 
 
 (* ::Subsection:: *)
@@ -501,7 +530,7 @@ RQAEstimateDimensionality[ts_,\[Tau]_,opts:OptionsPattern[]]:=Module[
 
 
 (* ::Subsubsection:: *)
-(*Metric Helpers*)
+(*Segments*)
 
 
 (* ::Text:: *)
@@ -509,7 +538,7 @@ RQAEstimateDimensionality[ts_,\[Tau]_,opts:OptionsPattern[]]:=Module[
 
 
 (* ::Text:: *)
-(*Segment counters - these don't care about triangularity*)
+(*Segment counters *)
 
 
 runLength[list_]:={First[#],Length[#]}&/@Split[Map[occupied,list]]
@@ -527,7 +556,7 @@ matrixSegmentLengths[m_,tLen_]:=
 
 
 (* ::Text:: *)
-(*LOI zapper*)
+(*LOI *)
 
 
 RQARemoveLOI[rm_]:=(1-IdentityMatrix[nN[rm]])rm
@@ -541,13 +570,10 @@ RQARemoveLOI[rm_]:=(1-IdentityMatrix[nN[rm]])rm
 (*Segments - vertical*)
 
 
-(* ::Code:: *)
-(*verticalSegments[rm_]:= Transpose[UpperTriangularize[rm,1]]/;SquareMatrixQ[rm] (* this was wrong *)*)
+Options[verticalSegments]={"Symmetric"->True,"Tmin"->1};
 
-
-Options[verticalSegments]={"Symmetric"->True};
-
-verticalSegments[rm_,opts:OptionsPattern[]]:= Transpose[rm]
+verticalSegments[rm_,opts:OptionsPattern[]]:= Transpose[
+	If[OptionValue["Symmetric"],UpperTriangularize[rm,OptionValue["Tmin"]],rm]]
 
 
 Options[RQAVerticalLineLengths]=Join[Options[verticalSegments],{"Vmin"->2}];
@@ -567,17 +593,43 @@ RQANVerticalRecurrentPoints[rm_,opts:OptionsPattern[]]:=Total[RQAVerticalLineLen
 
 
 (* ::Text:: *)
+(*Segments - horizontal*)
+
+
+Options[horizontalSegments]={"Symmetric"->True,"Tmin"->1};
+
+horizontalSegments[rm_,opts:OptionsPattern[]]:= Transpose[
+	If[OptionValue["Symmetric"],UpperTriangularize[rm,OptionValue["Tmin"]],rm]]
+
+
+Options[RQAHorizontalLineLengths]=Join[Options[horizontalSegments],{"Hmin"->2}];
+
+RQAHorizontalLineLengths[rm_,opts:OptionsPattern[]]:=
+	Flatten[matrixSegmentLengths[horizontalSegments[rm,opts],OptionValue["Hmin"]]]
+
+
+Options[RQANHorizontalLines]= Options[RQAHorizontalLineLengths];
+
+RQANHorizontalLines[rm_,opts:OptionsPattern[]]:=Length[RQAHorizontalLineLengths[rm,opts]]
+
+
+Options[RQANHorizontalRecurrentPoints]=Options[RQAHorizontalLineLengths];
+
+RQANHorizontalRecurrentPoints[rm_,opts:OptionsPattern[]]:=Total[RQAHorizontalLineLengths[rm,opts]]
+
+
+(* ::Text:: *)
 (*Segments - diagonal*)
 
 
-(* ::Code:: *)
-(*diagonalSegments[rm_]:= Diagonal[UpperTriangularize[rm,1],#]&/@Range[1,nN[rm]-1] /;SquareMatrixQ[rm] (* wrong *)*)
+Options[diagonalSegments]={"Symmetric"->True,"Tmin"->1,"Tmax"->Automatic};
 
-
-Options[diagonalSegments]={"Symmetric"->True};
-
-diagonalSegments[rm_,opts:OptionsPattern[]]:=
-	Diagonal[rm,#]&/@Range[-(nN[rm]-1),nN[rm]-1]
+diagonalSegments[rm_,opts:OptionsPattern[]]:=Block[{n,tmin,tmax,sym},
+	sym=OptionValue["Symmetric"];
+	tmin=OptionValue["Tmin"];
+	tmax=If[OptionValue["Tmax"]===Automatic,nN[rm]-1,OptionValue["Tmax"]];
+	
+	Diagonal[rm,#]&/@Range[tmin,tmax]]
 
 
 Options[RQADiagonalLineLengths]=Join[Options[diagonalSegments],{"Dmin"->2}];
@@ -603,9 +655,19 @@ RQANDiagonalRecurrentPoints[rm_,opts:OptionsPattern[]]:=Total[RQADiagonalLineLen
 (*Total Number of Points - whole array and diagonal based.*)
 
 
-RQANRecurrentPoints[rm_SparseArray]:=Length[rm["NonzeroValues"]]
+Options[RQANRecurrentPoints]={"Symmetric"->True,"Tmin"->1};
 
-RQANRecurrentPoints[rm_]:=Count[rm,x_/;occupied[x],{ArrayDepth[rm]}]
+RQANRecurrentPoints[rm_SparseArray,opts:OptionsPattern[]]:=Block[{l},
+	l=Length[rm["NonzeroValues"]];
+	If[OptionValue["Symmetric"],Round[l/2],l]]
+
+RQANRecurrentPoints[rm_,opts:OptionsPattern[]]:=Count[
+	If[OptionValue["Symmetric"],UpperTriangularize[rm,OptionValue["Tmin"]],rm],
+		x_/;occupied[x],{ArrayDepth[rm]}]
+		
+RQANRecurrentPoints[rm_,k_Integer,opts:OptionsPattern[]]:=Count[
+	If[OptionValue["Symmetric"],UpperTriangularize[rm,OptionValue["Tmin"]],rm],
+		x_/;occupied[x],{ArrayDepth[rm]}]
 
 
 (* ::Subsubsection:: *)
@@ -617,11 +679,11 @@ RQANRecurrentPoints[rm_]:=Count[rm,x_/;occupied[x],{ArrayDepth[rm]}]
 
 
 RQARecurrence[rm_SparseArray,opts:OptionsPattern[]]:=
-	RQANRecurrentPoints[rm]/nNoLOI[rm]/;SquareMatrixQ[rm]
+	RQANRecurrentPoints[rm,opts]/scaleFactor[rm,opts]/;SquareMatrixQ[rm]
 
 
 RQARecurrence[rm_SparseArray,k_Integer,opts:OptionsPattern[]]:=(
-	RQANRecurrentPoints[Diagonal[rm,k]]/(nN[rm]-k)
+	RQANRecurrentPoints[Diagonal[rm,k],opts]/(scaleFactor[rm,opts]-k)
 )/;SquareMatrixQ[rm]
 
 
@@ -632,7 +694,7 @@ RQARecurrence[rm_SparseArray,k_Integer,opts:OptionsPattern[]]:=(
 Options[RQADeterminism]=Join[Options[RQANDiagonalRecurrentPoints],{"Dmin"->2}];
 
 RQADeterminism[rm_SparseArray,opts:OptionsPattern[]]:=(
-	RQANDiagonalRecurrentPoints[rm,opts]/RQANRecurrentPoints[rm]
+	RQANDiagonalRecurrentPoints[rm,opts]/RQANRecurrentPoints[rm,opts]
 )/;SquareMatrixQ[rm]
 
 
@@ -641,7 +703,7 @@ RQADeterminism[rm_SparseArray,opts:OptionsPattern[]]:=(
 
 
 RQARatio[rm_,opts:OptionsPattern[]]:=
-	(nNoLOI[rm](RQANDiagonalRecurrentPoints[rm,opts]/(RQANDiagonalRecurrentPoints[rm,"Dmin"->1]^2))) /; SquareMatrixQ[rm]
+	(scaleFactor[rm,opts](RQANDiagonalRecurrentPoints[rm,opts]/(RQANDiagonalRecurrentPoints[rm,"Dmin"->1]^2))) /; SquareMatrixQ[rm]
 
 
 (* ::Text:: *)
@@ -691,7 +753,17 @@ RQATrend[rm_,opts:OptionsPattern[]]:= Module[{tildeN},
 
 
 (* ::Text:: *)
-(*Vertical things*)
+(*Entropy*)
+
+
+Options[RQAEntropy]=Options[RQADiagonalLineLengths];
+
+RQAEntropy[rm_,opts:OptionsPattern[]]:=
+	(Entropy[2,RQADiagonalLineLengths[rm,opts]]) /; SquareMatrixQ[rm]
+
+
+(* ::Subsubsection:: *)
+(*Extended RQA*)
 
 
 RQALaminarity[rm_,opts:OptionsPattern[]]:=
@@ -700,10 +772,6 @@ RQALaminarity[rm_,opts:OptionsPattern[]]:=
 
 RQATrappingTime[rm_,opts:OptionsPattern[]]:=
 	(Mean[RQAVerticalLineLengths[rm,opts]]) /; SquareMatrixQ[rm]
-
-
-RQAEntropy[rm_,opts:OptionsPattern[]]:=
-	(Entropy[2,RQADiagonalLineLengths[rm,opts]]) /; SquareMatrixQ[rm]
 
 
 RQAChaos[rm_,opts:OptionsPattern[]]:=
@@ -729,7 +797,7 @@ RQAVmax[rm_,opts:OptionsPattern[]]:= Max[RQAVerticalLineLengths[rm,opts]] /; Squ
 (*End the private context*)
 
 
-End[]
+End[];
 
 
 (* ::Subsection:: *)
@@ -744,9 +812,10 @@ Protect[{RQAEmbed,RQADistanceMap,RQARecurrenceMap,
 	RQATrend,RQAEntropy,RQAChaos,RQAVmax,
 	RQADApply,RQADmean,RQADmax,
 	RQAMakeTimeSeries,RQATimeSeriesEpochs,              
-	RQAVerticalLineLengths,RQADiagonalLineLengths,
-	RQANLines,RQANRecurrentPoints,RQANVerticalLines,RQANDiagonalLines,
-	RQANVerticalRecurrentPoints,RQANDiagonalRecurrentPoints}]
+	RQAVerticalLineLengths,RQAHorizontalLengths,RQADiagonalLineLengths,
+	RQANLines,RQANRecurrentPoints,RQANVerticalLines,RQANHorizontal,RQANDiagonalLines,
+	RQANVerticalRecurrentPoints,RQANHorizontalRecurrentPoints,RQANDiagonalRecurrentPoints,
+	$RQADebug,$RQAVersion}];
 
 
 (* ::Subsection:: *)

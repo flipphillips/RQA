@@ -42,6 +42,8 @@ A major revision that uses the definitions from the Webber book, sparse arrays, 
 - `RQADmean`
 - `RQANonzeroValues`
 - added diagonal-only computations (like RR_star) so that we could calculate other difficult-to-do things. These are `RQAXxx[rm,k,opts]`
+- `build.wls`
+- `Globals`
 
 ### Fixed
 

@@ -2,6 +2,11 @@
 
 ![logo](RQA/Documentation/icon.png)
 
+## Utilitron
+
+- $RQAVersion
+
+
 ## Time-series related
 
 - Check for `RegularlySampledQ`
