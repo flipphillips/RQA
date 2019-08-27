@@ -570,7 +570,7 @@ RQARemoveLOI[rm_]:=(1-IdentityMatrix[nN[rm]])rm
 (*Segments - vertical*)
 
 
-Options[verticalSegments]={"Symmetric"->True,"Tmin"->1};
+Options[verticalSegments]={"Symmetric"->True,"Tmin"->1,"Vmin"->2};
 
 verticalSegments[rm_,opts:OptionsPattern[]]:= Transpose[
 	If[OptionValue["Symmetric"],UpperTriangularize[rm,OptionValue["Tmin"]],rm]]
@@ -579,7 +579,7 @@ verticalSegments[rm_,opts:OptionsPattern[]]:= Transpose[
 Options[RQAVerticalLineLengths]=Join[Options[verticalSegments],{"Vmin"->2}];
 
 RQAVerticalLineLengths[rm_,opts:OptionsPattern[]]:=
-	Flatten[matrixSegmentLengths[verticalSegments[rm,opts],OptionValue["Vmin"]]]
+	Flatten[matrixSegmentLengths[verticalSegments[rm,FilterRules[{opts}, Options[verticalSegments]]],OptionValue["Vmin"]]]
 
 
 Options[RQANVerticalLines]= Options[RQAVerticalLineLengths];
@@ -605,7 +605,7 @@ horizontalSegments[rm_,opts:OptionsPattern[]]:= Transpose[
 Options[RQAHorizontalLineLengths]=Join[Options[horizontalSegments],{"Hmin"->2}];
 
 RQAHorizontalLineLengths[rm_,opts:OptionsPattern[]]:=
-	Flatten[matrixSegmentLengths[horizontalSegments[rm,opts],OptionValue["Hmin"]]]
+	Flatten[matrixSegmentLengths[horizontalSegments[rm,FilterRules[{opts}, Options[horizontalSegments]]],OptionValue["Hmin"]]]
 
 
 Options[RQANHorizontalLines]= Options[RQAHorizontalLineLengths];
@@ -635,7 +635,7 @@ diagonalSegments[rm_,opts:OptionsPattern[]]:=Block[{n,tmin,tmax,sym},
 Options[RQADiagonalLineLengths]=Join[Options[diagonalSegments],{"Dmin"->2}];
 
 RQADiagonalLineLengths[rm_,opts:OptionsPattern[]]:=
-	Flatten[matrixSegmentLengths[diagonalSegments[rm,opts],OptionValue["Dmin"]]]
+	Flatten[matrixSegmentLengths[diagonalSegments[rm,FilterRules[{opts}, Options[diagonalSegments]]],OptionValue["Dmin"]]]
 	
 RQADiagonalLineLengths[rm_,k_,opts:OptionsPattern[]]:=
 	segmentLengths[Diagonal[rm,k],OptionValue["Dmin"]]
@@ -678,12 +678,14 @@ RQANRecurrentPoints[rm_,k_Integer,opts:OptionsPattern[]]:=Count[
 (*Recurrence - overall and diagonal-only (SubStar[RR]) versions*)
 
 
+Options[RQARecurrence] = Options[scaleFactor];
+
 RQARecurrence[rm_SparseArray,opts:OptionsPattern[]]:=
-	RQANRecurrentPoints[rm,opts]/scaleFactor[rm,opts]/;SquareMatrixQ[rm]
+	RQANRecurrentPoints[rm,opts]/scaleFactor[rm,FilterRules[{opts}, Options[scaleFactor]]]/;SquareMatrixQ[rm]
 
 
 RQARecurrence[rm_SparseArray,k_Integer,opts:OptionsPattern[]]:=(
-	RQANRecurrentPoints[Diagonal[rm,k],opts]/(scaleFactor[rm,opts]-k)
+	RQANRecurrentPoints[Diagonal[rm,k],FilterRules[{opts}, Options[RQANRecurrentPoints]]]/(scaleFactor[rm,FilterRules[{opts}, Options[scaleFactor]]]-k)
 )/;SquareMatrixQ[rm]
 
 
@@ -694,7 +696,7 @@ RQARecurrence[rm_SparseArray,k_Integer,opts:OptionsPattern[]]:=(
 Options[RQADeterminism]=Join[Options[RQANDiagonalRecurrentPoints],{"Dmin"->2}];
 
 RQADeterminism[rm_SparseArray,opts:OptionsPattern[]]:=(
-	RQANDiagonalRecurrentPoints[rm,opts]/RQANRecurrentPoints[rm,opts]
+	RQANDiagonalRecurrentPoints[rm,FilterRules[{opts}, Options[RQANDiagonalRecurrentPoints]]]/RQANRecurrentPoints[rm,FilterRules[{opts}, Options[RQANRecurrentPoints]]]
 )/;SquareMatrixQ[rm]
 
 
@@ -703,7 +705,8 @@ RQADeterminism[rm_SparseArray,opts:OptionsPattern[]]:=(
 
 
 RQARatio[rm_,opts:OptionsPattern[]]:=
-	(scaleFactor[rm,opts](RQANDiagonalRecurrentPoints[rm,opts]/(RQANDiagonalRecurrentPoints[rm,"Dmin"->1]^2))) /; SquareMatrixQ[rm]
+	(scaleFactor[rm,FilterRules[{opts}, Options[scaleFactor]]]
+		(RQANDiagonalRecurrentPoints[rm,FilterRules[{opts}, Options[RQANDiagonalRecurrentPoints]]]/(RQANDiagonalRecurrentPoints[rm,"Dmin"->1]^2))) /; SquareMatrixQ[rm]
 
 
 (* ::Text:: *)

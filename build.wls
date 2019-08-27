@@ -30,11 +30,10 @@ Save[gfile, {$RQADebug, $RQAVersion}];
 files = FileNames["*.paclet", $directory];
 Print["Found paclets (to be deleted): ", files];
 DeleteFile /@ files;
-
-(* build new paclet *)
-Print["Building new paclet"];
 *)
 
+(* build new paclet *)
+Print["Updating paclet file"];
 UpdatePacletFile[pacletDirectory,$directory];
 
 (*

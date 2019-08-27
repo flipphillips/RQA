@@ -4,9 +4,6 @@
 
 ## Utilitron
 
-- $RQAVersion
-
-
 ## Time-series related
 
 - Check for `RegularlySampledQ`
