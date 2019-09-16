@@ -28,7 +28,7 @@
 
 - Finish implementation of the Estimation of Embedding Dimensions. I based this on an older Kennel reference, but there is a new kid in town:
   
-  Kennel, M. B., & Abarbanel, H. D. I. (2002). False neighbors and false strands: a reliable minimum embedding dimension algorithm. *Physical Review. E, Statistical, Nonlinear, and Soft Matter Physics,* 66(2 Pt 2), 026209–026218. https://doi.org/10.1103/PhysRevE.66.026209
+  Kennel, M. B., & Abarbanel, H. D. I. (2002). False neighbors and false strands: a reliable minimum embedding dimension algorithm. *Physical Review. E, Statistical, Nonlinear, and Soft Matter Physics,* 66(2 Pt 2), 026209–026218. <https://doi.org/10.1103/PhysRevE.66.026209>
 
 - Neighborhood and metric estimation:
     "because the neighbourhood of xi does not have to be the same as that of xj . This property leads to an asymmetric RP."
